@@ -32,8 +32,9 @@ app.use(express.static(path.join(__dirname, 'dashboard/public')));
 
 // Simple token-based auth for the dashboard
 app.use((req, res, next) => {
-  // Skip auth for public assets
+  // Skip auth for public assets and the healthcheck endpoint
   if (req.path.startsWith('/public')) return next();
+  if (req.path === '/health') return next();
 
   // Allow if correct secret header is present (for API calls)
   const authHeader = req.headers['x-dashboard-secret'];
@@ -65,6 +66,10 @@ app.get('*', (req, res) => {
 });
 
 // ─── API: Dashboard overview ──────────────────────────────────────────────────
+
+// Lightweight healthcheck — no external dependencies, no credentials required.
+// Use this as the Railway healthcheck path instead of /api/overview.
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 app.get('/api/overview', async (req, res) => {
   try {
