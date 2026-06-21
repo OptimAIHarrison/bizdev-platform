@@ -1,8 +1,0 @@
-[phases.install]
-cmd = "npm ci"
-
-[phases.build]
-cmd = "npx playwright install chromium --with-deps"
-
-[start]
-cmd = "node server.js"
