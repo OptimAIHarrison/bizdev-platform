@@ -22,7 +22,10 @@ const { runNurtureEngine } = require('./modules/nurture');
 const { runHealthCheck } = require('./modules/health-check');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[Dashboard] BizDev Platform running on port ${PORT}`);
+});
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
