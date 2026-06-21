@@ -3,43 +3,196 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BizDev Platform — Login</title>
+  <title>Outreach Machine — Sign in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1117; --surface: #1a1d27; --border: #2d3148;
-      --text: #e8eaf0; --muted: #6b7280; --accent: #5b7cf6;
-      --red: #ef4444; --radius: 8px;
+      --bg: #0a0b10;
+      --glass: rgba(24, 27, 38, 0.55);
+      --glass-light: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-soft: rgba(255, 255, 255, 0.05);
+      --indigo: #6366f1;
+      --indigo-bright: #818cf8;
+      --violet: #a78bfa;
+      --cyan: #22d3ee;
+      --green: #34d399;
+      --red: #f87171;
+      --text: #f5f5f7;
+      --muted: #797c8a;
+      --faint: #4b4e5c;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'SF Mono', monospace;
+      --gradient-signal: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 50%, var(--cyan) 100%);
     }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 40px; width: 340px; }
-    h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    p { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
-    label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-    input { width: 100%; background: #22263a; border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 10px 14px; font-size: 14px; outline: none; transition: border-color 0.15s; }
-    input:focus { border-color: var(--accent); }
-    button { width: 100%; margin-top: 16px; background: var(--accent); color: white; border: none; border-radius: var(--radius); padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-    button:hover { background: #4a68e0; }
-    .error { color: var(--red); font-size: 12px; margin-top: 10px; display: none; }
-    .brand { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { color-scheme: dark; }
+
+    body {
+      background:
+        radial-gradient(ellipse 1100px 600px at 20% -10%, rgba(99,102,241,0.16), transparent 60%),
+        radial-gradient(ellipse 900px 600px at 100% 100%, rgba(34,211,238,0.08), transparent 55%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--sans);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 40px 36px;
+      width: 360px;
+      position: relative;
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
+      animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 45%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    .logo-mark { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .logo-glyph {
+      width: 38px; height: 38px;
+      border-radius: 11px;
+      background: var(--gradient-signal);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 4px 18px rgba(99,102,241,0.45);
+      flex-shrink: 0;
+    }
+    .logo-glyph::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 11px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), transparent 60%);
+    }
+    .logo-glyph svg { width: 20px; height: 20px; position: relative; z-index: 1; }
+
+    .logo-text h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .pulse-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      margin-right: 7px; animation: pulse-soft 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse-soft { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .brand-row { display: flex; gap: 6px; margin-top: 6px; }
+    .brand-chip {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+      padding: 3px 8px; border-radius: 100px;
+      background: var(--glass-light); border: 1px solid var(--border-soft);
+      color: var(--muted);
+    }
+
+    label {
+      display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); margin-bottom: 8px; font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 15px;
+      font-size: 14px;
+      font-family: var(--sans);
+      outline: none;
+      transition: all 0.18s;
+    }
+    input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    input::placeholder { color: var(--faint); }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      background: var(--gradient-signal);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--sans);
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 4px 16px -4px rgba(99,102,241,0.6);
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    button:hover { box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 6px 24px -4px rgba(99,102,241,0.75); transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .error {
+      color: var(--red);
+      font-size: 12.5px;
+      margin-top: 14px;
+      display: none;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .footer-note {
+      font-size: 10.5px;
+      color: var(--faint);
+      text-align: center;
+      margin-top: 24px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>BizDev Platform</h1>
-    <p>OptimAI · Nudge Digital</p>
+    <div class="logo-mark">
+      <div class="logo-glyph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h4l2-7 4 14 2-7h4"/></svg>
+      </div>
+      <div class="logo-text">
+        <h1><span class="pulse-dot"></span>Outreach Machine</h1>
+        <div class="brand-row">
+          <span class="brand-chip">OptimAI</span>
+          <span class="brand-chip">Nudge Digital</span>
+        </div>
+      </div>
+    </div>
+
     <label>Access Code</label>
-    <input type="password" id="secret" placeholder="Enter your access code" onkeydown="if(event.key==='Enter') login()">
-    <button onclick="login()">Enter</button>
-    <div class="error" id="err">Incorrect access code.</div>
-    <div class="brand">For internal use only</div>
+    <input type="password" id="secret" placeholder="Enter your access code" autofocus onkeydown="if(event.key==='Enter') login()">
+    <button onclick="login()">Enter the Machine</button>
+    <div class="error" id="err">Incorrect access code — try again.</div>
+
+    <div class="footer-note">For internal use only</div>
   </div>
+
   <script>
     function login() {
       const secret = document.getElementById('secret').value;
-      // Set cookie and redirect
       document.cookie = `ds=${encodeURIComponent(secret)}; path=/; max-age=86400`;
-      // Verify by calling a protected endpoint
       fetch('/api/overview', { headers: { 'x-dashboard-secret': secret } })
         .then(r => {
           if (r.ok) window.location.href = '/';

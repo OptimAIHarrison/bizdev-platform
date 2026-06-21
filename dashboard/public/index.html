@@ -3,346 +3,604 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BizDev Platform</title>
+  <title>Outreach Machine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
-    /* ── Reset & tokens ─────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+    /* ════════════════════════════════════════════════════════════════════
+       OUTREACH MACHINE — design tokens
+       Subject: a precision control panel for a two-brand outreach engine.
+       Palette: obsidian void + electric indigo signal + cyan data accent.
+       ════════════════════════════════════════════════════════════════════ */
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2d3148;
-      --text: #e8eaf0;
-      --muted: #6b7280;
-      --accent: #5b7cf6;
-      --accent-dim: #3a4f9e;
-      --green: #22c55e;
-      --yellow: #eab308;
-      --red: #ef4444;
-      --orange: #f97316;
-      --font: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --radius: 8px;
+      /* Surfaces */
+      --void:        #08090d;
+      --bg:          #0a0b10;
+      --surface:     #12141c;
+      --surface-2:   #181b26;
+      --surface-3:   #1f2330;
+      --glass:       rgba(24, 27, 38, 0.55);
+      --glass-light: rgba(255, 255, 255, 0.04);
+      --border:      rgba(255, 255, 255, 0.08);
+      --border-soft: rgba(255, 255, 255, 0.05);
+      --border-glow: rgba(99, 102, 241, 0.35);
+
+      /* Signal colors */
+      --indigo:      #6366f1;
+      --indigo-bright: #818cf8;
+      --indigo-dim:  #4338ca;
+      --cyan:        #22d3ee;
+      --violet:      #a78bfa;
+
+      /* Semantic */
+      --green:       #34d399;
+      --yellow:      #fbbf24;
+      --orange:      #fb923c;
+      --red:         #f87171;
+
+      /* Text */
+      --text:        #f5f5f7;
+      --text-dim:    #c4c6d0;
+      --muted:       #797c8a;
+      --faint:       #4b4e5c;
+
+      /* Type */
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+      /* Radii */
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 18px;
+      --r-xl: 24px;
+
+      /* Gradient signal — the recurring "machine pulse" */
+      --gradient-signal: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 50%, var(--cyan) 100%);
+      --gradient-glow: radial-gradient(circle at 30% 0%, rgba(99,102,241,0.25), transparent 60%);
     }
 
-    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Layout ──────────────────────────────────────────────────────────── */
-    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    html { color-scheme: dark; }
+
+    body {
+      background:
+        radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(99,102,241,0.12), transparent 60%),
+        radial-gradient(ellipse 900px 500px at 100% 10%, rgba(34,211,238,0.06), transparent 55%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    ::selection { background: rgba(99,102,241,0.35); color: white; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--indigo-dim); background-clip: padding-box; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       LAYOUT
+       ════════════════════════════════════════════════════════════════════ */
+    .app { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
 
     /* ── Sidebar ─────────────────────────────────────────────────────────── */
     .sidebar {
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 24px 0;
-      display: flex;
-      flex-direction: column;
       position: sticky;
       top: 0;
       height: 100vh;
+      padding: 28px 0;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, rgba(18,20,28,0.9) 0%, rgba(10,11,16,0.95) 100%);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid var(--border-soft);
     }
 
-    .logo {
-      padding: 0 20px 24px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 16px;
+    .logo-block { padding: 0 24px 28px; margin-bottom: 8px; border-bottom: 1px solid var(--border-soft); }
+
+    .logo-mark {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 14px;
     }
 
-    .logo h1 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-    .logo p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .logo-glyph {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      background: var(--gradient-signal);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 4px 16px rgba(99,102,241,0.4);
+      flex-shrink: 0;
+    }
+    .logo-glyph::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), transparent 60%);
+    }
+    .logo-glyph svg { width: 18px; height: 18px; position: relative; z-index: 1; }
+
+    .logo-text h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .logo-text .pulse-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      margin-right: 6px;
+      animation: pulse-soft 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse-soft { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .brand-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .brand-chip {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 100px;
+      background: var(--glass-light);
+      border: 1px solid var(--border-soft);
+      color: var(--muted);
+    }
+
+    nav { padding: 14px 12px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
+      gap: 11px;
+      padding: 10px 12px;
       cursor: pointer;
       color: var(--muted);
       font-size: 13px;
       font-weight: 500;
-      border-left: 3px solid transparent;
-      transition: all 0.15s;
+      border-radius: var(--r-md);
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
-    .nav-item:hover { color: var(--text); background: var(--surface2); }
-    .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(91,124,246,0.08); }
-    .nav-item .icon { width: 16px; text-align: center; }
+    .nav-item:hover { color: var(--text); background: var(--glass-light); }
+    .nav-item.active {
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(34,211,238,0.06));
+      box-shadow: 0 0 0 1px var(--border-glow) inset;
+    }
+    .nav-item.active .icon { color: var(--indigo-bright); }
+    .nav-item .icon { width: 16px; height: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--faint); transition: color 0.18s; }
+    .nav-item svg { width: 16px; height: 16px; stroke-width: 1.8; }
 
     .nav-badge {
       margin-left: auto;
       background: var(--red);
       color: white;
       font-size: 10px;
-      padding: 1px 5px;
-      border-radius: 10px;
+      min-width: 17px;
+      height: 17px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 100px;
       font-weight: 700;
+      padding: 0 5px;
+      box-shadow: 0 0 10px rgba(248,113,113,0.5);
     }
 
     .sidebar-footer {
       margin-top: auto;
-      padding: 16px 20px;
-      border-top: 1px solid var(--border);
-      font-size: 11px;
-      color: var(--muted);
+      padding: 16px 24px 0;
+      border-top: 1px solid var(--border-soft);
+      padding-top: 16px;
+    }
+    .health-mini { display: flex; gap: 14px; margin-bottom: 10px; }
+    .health-mini-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+    .sidebar-footer .last-run { font-size: 11px; color: var(--faint); font-family: var(--mono); }
+
+    /* ── Main ────────────────────────────────────────────────────────────── */
+    .main { overflow-y: auto; }
+    .view { display: none; padding: 36px 40px 60px; max-width: 1320px; }
+    .view.active { display: block; animation: fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .view-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+    h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .view-subtitle { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       GLASS COMPONENTS
+       ════════════════════════════════════════════════════════════════════ */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      position: relative;
+    }
+    .glass::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0) 40%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
     }
 
-    /* ── Main content ────────────────────────────────────────────────────── */
-    .main { overflow-y: auto; }
-    .view { display: none; padding: 32px; }
-    .view.active { display: block; }
+    .card { padding: 22px; margin-bottom: 20px; }
+    .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.01em; }
+    .card .card-sub { font-size: 12px; color: var(--muted); margin-top: -10px; margin-bottom: 16px; }
 
-    h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .view-subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
-
-    /* ── Stats grid ──────────────────────────────────────────────────────── */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    /* ── Stat cards ──────────────────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
 
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
+      padding: 22px;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
     }
-    .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
-    .stat-card .value { font-size: 32px; font-weight: 700; line-height: 1; }
-    .stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .stat-card.green .value { color: var(--green); }
-    .stat-card.blue .value { color: var(--accent); }
-    .stat-card.yellow .value { color: var(--yellow); }
-    .stat-card.orange .value { color: var(--orange); }
-
-    /* ── Cards ────────────────────────────────────────────────────────────── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px -12px rgba(0,0,0,0.5); }
+    .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; font-weight: 600; }
+    .stat-card .value { font-size: 36px; font-weight: 800; line-height: 1; font-family: var(--mono); letter-spacing: -0.02em; }
+    .stat-card .sub { font-size: 12px; color: var(--faint); margin-top: 6px; }
+    .stat-card.indigo .value { color: var(--indigo-bright); text-shadow: 0 0 24px rgba(99,102,241,0.35); }
+    .stat-card.cyan .value { color: var(--cyan); text-shadow: 0 0 24px rgba(34,211,238,0.3); }
+    .stat-card.green .value { color: var(--green); text-shadow: 0 0 24px rgba(52,211,153,0.3); }
+    .stat-card.amber .value { color: var(--yellow); text-shadow: 0 0 24px rgba(251,191,36,0.3); }
 
     /* ── Funnel ──────────────────────────────────────────────────────────── */
-    .funnel { display: flex; align-items: stretch; gap: 2px; margin-bottom: 8px; border-radius: var(--radius); overflow: hidden; }
-    .funnel-step { flex: 1; background: var(--accent-dim); padding: 12px 8px; text-align: center; font-size: 12px; transition: background 0.2s; }
-    .funnel-step:hover { background: var(--accent); }
-    .funnel-step .n { font-size: 20px; font-weight: 700; }
-    .funnel-step .l { font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .funnel { display: flex; align-items: stretch; gap: 1px; border-radius: var(--r-md); overflow: hidden; }
+    .funnel-step {
+      flex: 1;
+      padding: 18px 10px;
+      text-align: center;
+      position: relative;
+      transition: all 0.25s;
+      cursor: default;
+    }
+    .funnel-step:nth-child(1) { background: linear-gradient(180deg, rgba(99,102,241,0.22), rgba(99,102,241,0.08)); }
+    .funnel-step:nth-child(2) { background: linear-gradient(180deg, rgba(99,102,241,0.18), rgba(99,102,241,0.06)); }
+    .funnel-step:nth-child(3) { background: linear-gradient(180deg, rgba(167,139,250,0.18), rgba(167,139,250,0.06)); }
+    .funnel-step:nth-child(4) { background: linear-gradient(180deg, rgba(34,211,238,0.18), rgba(34,211,238,0.06)); }
+    .funnel-step:nth-child(5) { background: linear-gradient(180deg, rgba(52,211,153,0.22), rgba(52,211,153,0.08)); }
+    .funnel-step:hover { transform: scale(1.03); z-index: 2; }
+    .funnel-step .n { font-size: 24px; font-weight: 800; font-family: var(--mono); }
+    .funnel-step .l { font-size: 10.5px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
 
     /* ── Table ───────────────────────────────────────────────────────────── */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
-    td { padding: 12px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { text-align: left; padding: 12px 16px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-bottom: 1px solid var(--border-soft); font-weight: 700; }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--surface2); }
+    tr { transition: background 0.15s; }
+    tbody tr:hover { background: var(--glass-light); }
 
-    /* ── Status badges ───────────────────────────────────────────────────── */
+    /* ── Badges ──────────────────────────────────────────────────────────── */
     .badge {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 10.5px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
+      border: 1px solid transparent;
     }
-    .badge-new { background: rgba(107,114,128,0.2); color: var(--muted); }
-    .badge-queued { background: rgba(91,124,246,0.2); color: var(--accent); }
-    .badge-active { background: rgba(34,197,94,0.2); color: var(--green); }
-    .badge-responded { background: rgba(234,179,8,0.2); color: var(--yellow); }
-    .badge-paused { background: rgba(249,115,22,0.15); color: var(--orange); }
-    .badge-won { background: rgba(34,197,94,0.3); color: var(--green); }
-    .badge-meeting_booked { background: rgba(34,197,94,0.2); color: var(--green); }
-    .badge-unsubscribed, .badge-do_not_contact { background: rgba(239,68,68,0.2); color: var(--red); }
+    .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .badge-new { background: rgba(121,124,138,0.12); color: var(--muted); border-color: rgba(121,124,138,0.25); }
+    .badge-queued { background: rgba(99,102,241,0.14); color: var(--indigo-bright); border-color: rgba(99,102,241,0.3); }
+    .badge-active { background: rgba(52,211,153,0.14); color: var(--green); border-color: rgba(52,211,153,0.3); }
+    .badge-responded { background: rgba(251,191,36,0.14); color: var(--yellow); border-color: rgba(251,191,36,0.3); }
+    .badge-paused { background: rgba(251,146,60,0.12); color: var(--orange); border-color: rgba(251,146,60,0.28); }
+    .badge-won { background: rgba(52,211,153,0.22); color: var(--green); border-color: rgba(52,211,153,0.4); }
+    .badge-meeting_booked { background: rgba(52,211,153,0.14); color: var(--green); border-color: rgba(52,211,153,0.3); }
+    .badge-unsubscribed, .badge-do_not_contact { background: rgba(248,113,113,0.12); color: var(--red); border-color: rgba(248,113,113,0.28); }
+    .badge-positive_interest { background: rgba(52,211,153,0.14); color: var(--green); border-color: rgba(52,211,153,0.3); }
+    .badge-question_objection { background: rgba(251,191,36,0.14); color: var(--yellow); border-color: rgba(251,191,36,0.3); }
+    .badge-not_now_nurture { background: rgba(251,146,60,0.12); color: var(--orange); border-color: rgba(251,146,60,0.28); }
+    .badge-negative_hard_no { background: rgba(248,113,113,0.12); color: var(--red); border-color: rgba(248,113,113,0.28); }
+    .badge-out_of_office { background: rgba(121,124,138,0.12); color: var(--muted); border-color: rgba(121,124,138,0.25); }
+    .badge-referral_signal { background: rgba(99,102,241,0.14); color: var(--indigo-bright); border-color: rgba(99,102,241,0.3); }
 
-    .badge-positive_interest { background: rgba(34,197,94,0.2); color: var(--green); }
-    .badge-question_objection { background: rgba(234,179,8,0.2); color: var(--yellow); }
-    .badge-not_now_nurture { background: rgba(249,115,22,0.15); color: var(--orange); }
-    .badge-negative_hard_no { background: rgba(239,68,68,0.2); color: var(--red); }
-    .badge-out_of_office { background: rgba(107,114,128,0.2); color: var(--muted); }
-    .badge-referral_signal { background: rgba(91,124,246,0.2); color: var(--accent); }
+    .brand-optimai, .brand-nudge {
+      font-weight: 700; font-size: 11px; letter-spacing: 0.02em;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .brand-optimai::before, .brand-nudge::before { content: ''; width: 7px; height: 7px; border-radius: 2px; }
+    .brand-optimai { color: var(--indigo-bright); }
+    .brand-optimai::before { background: var(--gradient-signal); }
+    .brand-nudge { color: var(--cyan); }
+    .brand-nudge::before { background: var(--cyan); }
 
-    /* ── Brand badges ────────────────────────────────────────────────────── */
-    .brand-optimai { color: #818cf8; font-weight: 600; font-size: 11px; }
-    .brand-nudge { color: #34d399; font-weight: 600; font-size: 11px; }
-
-    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    /* ════════════════════════════════════════════════════════════════════
+       BUTTONS
+       ════════════════════════════════════════════════════════════════════ */
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border-radius: var(--radius);
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--r-md);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       border: none;
-      transition: all 0.15s;
+      font-family: var(--sans);
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
     }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: #4a68e0; }
-    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
-    .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-    .btn-sm { padding: 4px 10px; font-size: 12px; }
-    .btn-success { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .btn svg { width: 14px; height: 14px; stroke-width: 2; }
 
-    .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .btn-primary {
+      background: var(--gradient-signal);
+      color: white;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 4px 16px -4px rgba(99,102,241,0.6);
+    }
+    .btn-primary:hover { box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 6px 24px -4px rgba(99,102,241,0.75); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
 
-    /* ── Search/filter ───────────────────────────────────────────────────── */
-    input[type="text"], input[type="email"], select, textarea {
-      background: var(--surface2);
+    .btn-glass {
+      background: var(--glass-light);
+      backdrop-filter: blur(12px);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-glass:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: rgba(99,102,241,0.4); }
+
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border-soft); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border); background: var(--glass-light); }
+
+    .btn-danger { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+    .btn-danger:hover { background: rgba(248,113,113,0.18); }
+
+    .btn-success { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.28); }
+    .btn-success:hover { background: rgba(52,211,153,0.18); }
+
+    .btn-sm { padding: 6px 13px; font-size: 12px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+    .action-bar { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; align-items: center; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       FORMS
+       ════════════════════════════════════════════════════════════════════ */
+    input[type="text"], input[type="email"], input[type="password"], select, textarea {
+      background: var(--surface-2);
       border: 1px solid var(--border);
       color: var(--text);
-      border-radius: var(--radius);
-      padding: 8px 12px;
+      border-radius: var(--r-md);
+      padding: 10px 14px;
       font-size: 13px;
       font-family: var(--sans);
       outline: none;
-      transition: border-color 0.15s;
+      transition: all 0.18s;
       width: 100%;
     }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    input:focus, select:focus, textarea:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    input::placeholder, textarea::placeholder { color: var(--faint); }
     select { cursor: pointer; }
+    textarea { font-family: var(--mono); line-height: 1.6; }
 
     .search-bar { display: flex; gap: 10px; }
     .search-bar input { max-width: 280px; }
 
-    /* ── Prospect detail modal ───────────────────────────────────────────── */
+    /* ════════════════════════════════════════════════════════════════════
+       MODAL
+       ════════════════════════════════════════════════════════════════════ */
     .modal-overlay {
       display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
+      position: fixed; inset: 0;
+      background: rgba(5,6,10,0.75);
+      backdrop-filter: blur(6px);
       z-index: 100;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
-    .modal-overlay.open { display: flex; }
+    .modal-overlay.open { display: flex; animation: fade-in 0.2s; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
     .modal {
-      background: var(--surface);
+      background: linear-gradient(160deg, rgba(24,27,38,0.97), rgba(15,17,24,0.99));
+      backdrop-filter: blur(30px);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      width: 700px;
-      max-width: 95vw;
+      border-radius: var(--r-xl);
+      width: 720px;
+      max-width: 100%;
       max-height: 85vh;
       overflow-y: auto;
-      padding: 28px;
+      padding: 32px;
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset;
+      animation: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-    .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; padding: 4px; }
-    .modal-close:hover { color: var(--text); }
+    @keyframes modal-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .modal-close {
+      background: var(--glass-light); border: 1px solid var(--border-soft); color: var(--muted);
+      cursor: pointer; font-size: 16px; width: 32px; height: 32px; border-radius: 100px;
+      display: flex; align-items: center; justify-content: center; transition: all 0.18s;
+    }
+    .modal-close:hover { color: var(--text); background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); }
 
     /* ── Timeline ────────────────────────────────────────────────────────── */
     .timeline { list-style: none; position: relative; }
-    .timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: var(--border); }
-    .timeline-item { padding: 0 0 16px 24px; position: relative; }
-    .timeline-item::before { content: ''; position: absolute; left: 0; top: 5px; width: 15px; height: 15px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); }
-    .timeline-item.email::before { border-color: var(--accent); }
-    .timeline-item.linkedin::before { border-color: var(--green); }
-    .timeline-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .timeline-content { font-size: 13px; line-height: 1.5; color: var(--text); }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 1px; background: linear-gradient(180deg, var(--indigo), transparent); }
+    .timeline-item { padding: 0 0 18px 26px; position: relative; }
+    .timeline-item::before { content: ''; position: absolute; left: 0; top: 4px; width: 15px; height: 15px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--border); }
+    .timeline-item.email::before { border-color: var(--indigo); box-shadow: 0 0 10px rgba(99,102,241,0.4); }
+    .timeline-item.linkedin::before { border-color: var(--cyan); box-shadow: 0 0 10px rgba(34,211,238,0.4); }
+    .timeline-label { font-size: 10.5px; color: var(--muted); margin-bottom: 5px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.04em; }
+    .timeline-content { font-size: 13px; line-height: 1.6; color: var(--text-dim); }
 
-    /* ── System status ───────────────────────────────────────────────────── */
+    /* ── Status ──────────────────────────────────────────────────────────── */
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-    .status-ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
-    .status-err { background: var(--red); box-shadow: 0 0 6px var(--red); }
-    .status-unknown { background: var(--muted); }
+    .status-ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .status-err { background: var(--red); box-shadow: 0 0 8px var(--red); }
+    .status-unknown { background: var(--faint); }
 
-    .health-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .health-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
     .health-row:last-child { border-bottom: none; }
 
     /* ── Form layout ─────────────────────────────────────────────────────── */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
     .form-group.full { grid-column: 1 / -1; }
 
-    /* ── Scrollbar ───────────────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
     /* ── Loader ──────────────────────────────────────────────────────────── */
-    .loading { color: var(--muted); font-size: 13px; padding: 40px; text-align: center; }
+    .loading { color: var(--muted); font-size: 13px; padding: 50px; text-align: center; }
+    .loading::before {
+      content: ''; display: block; width: 22px; height: 22px; margin: 0 auto 14px;
+      border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--indigo);
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Toast ───────────────────────────────────────────────────────────── */
     .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--surface2);
+      position: fixed; bottom: 28px; right: 28px;
+      background: rgba(18,20,28,0.95);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 20px;
+      border-radius: var(--r-md);
+      padding: 13px 20px;
       font-size: 13px;
+      font-weight: 500;
       z-index: 999;
-      transform: translateY(80px);
+      transform: translateY(90px);
       opacity: 0;
-      transition: all 0.25s;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
     }
     .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success { border-color: var(--green); color: var(--green); }
-    .toast.error { border-color: var(--red); color: var(--red); }
+    .toast.success { border-color: rgba(52,211,153,0.4); }
+    .toast.success::before { content: '● '; color: var(--green); }
+    .toast.error { border-color: rgba(248,113,113,0.4); }
+    .toast.error::before { content: '● '; color: var(--red); }
 
-    /* ── Responsive ──────────────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    /* ── Misc ────────────────────────────────────────────────────────────── */
+    code, .mono { font-family: var(--mono); }
+    a { color: var(--indigo-bright); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @media (max-width: 860px) {
       .app { grid-template-columns: 1fr; }
       .sidebar { display: none; }
       .form-grid { grid-template-columns: 1fr; }
+      .view { padding: 24px 18px 50px; }
     }
   </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Sidebar -->
+  <!-- ═══════════════════════════ Sidebar ═══════════════════════════ -->
   <aside class="sidebar">
-    <div class="logo">
-      <h1>BizDev Platform</h1>
-      <p>OptimAI · Nudge Digital</p>
-    </div>
-    <nav>
-      <div class="nav-item active" data-view="overview"><span class="icon">◈</span> Overview</div>
-      <div class="nav-item" data-view="prospects"><span class="icon">◎</span> Prospects</div>
-      <div class="nav-item" data-view="replies" id="nav-replies"><span class="icon">◷</span> Inbox</div>
-      <div class="nav-item" data-view="drafts"><span class="icon">✎</span> Drafts</div>
-      <div class="nav-item" data-view="sequences"><span class="icon">≡</span> Sequences</div>
-      <div class="nav-item" data-view="templates"><span class="icon">✎</span> Templates</div>
-      <div class="nav-item" data-view="reporting"><span class="icon">▸</span> Reporting</div>
-      <div class="nav-item" data-view="settings"><span class="icon">⚙</span> Settings</div>
-    </nav>
-    <div class="sidebar-footer">
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-        <span class="status-dot" id="health-linkedin" title="LinkedIn"></span> LinkedIn
-        &nbsp;
-        <span class="status-dot" id="health-gmail" title="Gmail"></span> Gmail
+    <div class="logo-block">
+      <div class="logo-mark">
+        <div class="logo-glyph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h4l2-7 4 14 2-7h4"/></svg>
+        </div>
+        <div class="logo-text">
+          <h1><span class="pulse-dot"></span>Outreach Machine</h1>
+        </div>
       </div>
-      Last run: <span id="last-run">—</span>
+      <div class="brand-row">
+        <span class="brand-chip">OptimAI</span>
+        <span class="brand-chip">Nudge Digital</span>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-item active" data-view="overview">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>
+        Overview
+      </div>
+      <div class="nav-item" data-view="prospects">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></svg></span>
+        Prospects
+      </div>
+      <div class="nav-item" data-view="findleads">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg></span>
+        Find Leads
+      </div>
+      <div class="nav-item" data-view="replies" id="nav-replies">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+        Inbox
+      </div>
+      <div class="nav-item" data-view="drafts">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></span>
+        Drafts
+      </div>
+      <div class="nav-item" data-view="sequences">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M8.2 7.3 15.8 11M8.2 16.7 15.8 13"/></svg></span>
+        Sequences
+      </div>
+      <div class="nav-item" data-view="templates">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+        Templates
+      </div>
+      <div class="nav-item" data-view="reporting">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.5 8.5 13 14l-3-3-4.5 4.5"/></svg></span>
+        Reporting
+      </div>
+      <div class="nav-item" data-view="settings">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="health-mini">
+        <div class="health-mini-item"><span class="status-dot status-unknown" id="health-linkedin"></span>LinkedIn</div>
+        <div class="health-mini-item"><span class="status-dot status-unknown" id="health-gmail"></span>Gmail</div>
+      </div>
+      <div class="last-run">last run <span id="last-run">—</span></div>
     </div>
   </aside>
 
-  <!-- Main -->
+  <!-- ═══════════════════════════ Main ═══════════════════════════ -->
   <main class="main">
 
     <!-- ── Overview ───────────────────────────────────────────────────── -->
     <section class="view active" id="view-overview">
-      <h2>Command Centre</h2>
-      <p class="view-subtitle">Live funnel and system health</p>
-
-      <div class="stats-grid" id="stats-grid">
-        <div class="stat-card blue"><div class="label">Active</div><div class="value" id="stat-active">—</div><div class="sub">in sequences</div></div>
-        <div class="stat-card yellow"><div class="label">Replied</div><div class="value" id="stat-replied">—</div><div class="sub">awaiting action</div></div>
-        <div class="stat-card green"><div class="label">Meetings</div><div class="value" id="stat-meetings">—</div><div class="sub">booked</div></div>
-        <div class="stat-card orange"><div class="label">Sent Today</div><div class="value" id="stat-sent">—</div><div class="sub">messages</div></div>
+      <div class="view-head">
+        <div>
+          <h2>Command Centre</h2>
+          <p class="view-subtitle">Live funnel across OptimAI and Nudge Digital</p>
+        </div>
       </div>
 
-      <div class="card">
+      <div class="stats-grid">
+        <div class="glass stat-card indigo"><div class="label">Active</div><div class="value" id="stat-active">—</div><div class="sub">in sequence</div></div>
+        <div class="glass stat-card amber"><div class="label">Replied</div><div class="value" id="stat-replied">—</div><div class="sub">awaiting action</div></div>
+        <div class="glass stat-card green"><div class="label">Meetings</div><div class="value" id="stat-meetings">—</div><div class="sub">booked</div></div>
+        <div class="glass stat-card cyan"><div class="label">Sent Today</div><div class="value" id="stat-sent">—</div><div class="sub">messages</div></div>
+      </div>
+
+      <div class="glass card">
         <h3>Pipeline Funnel</h3>
-        <div class="funnel" id="funnel">
+        <div class="funnel">
           <div class="funnel-step"><div class="n" id="f-total">—</div><div class="l">Prospects</div></div>
           <div class="funnel-step"><div class="n" id="f-contacted">—</div><div class="l">Contacted</div></div>
           <div class="funnel-step"><div class="n" id="f-replied">—</div><div class="l">Replied</div></div>
@@ -352,28 +610,45 @@
       </div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-        <div class="card">
+        <div class="glass card">
           <h3>Quick Actions</h3>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <button class="btn btn-primary" onclick="triggerAction('run-outreach')">▶ Run Outreach Queue</button>
-            <button class="btn btn-ghost" onclick="triggerAction('run-replies')">⟳ Check Replies</button>
-            <button class="btn btn-ghost" onclick="triggerAction('run-nurture')">⊙ Run Nurture Engine</button>
-            <button class="btn btn-ghost" onclick="triggerAction('health-check')">◈ Run Health Check</button>
+            <button class="btn btn-primary" onclick="triggerAction('run-outreach')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Run Outreach Queue
+            </button>
+            <button class="btn btn-glass" onclick="triggerAction('run-replies')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+              Check Replies
+            </button>
+            <button class="btn btn-glass" onclick="triggerAction('run-nurture')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              Run Nurture Engine
+            </button>
+            <button class="btn btn-glass" onclick="triggerAction('health-check')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Run Health Check
+            </button>
           </div>
         </div>
-        <div class="card">
+        <div class="glass card">
           <h3>By Brand</h3>
-          <div class="health-row"><span class="brand-optimai">OptimAI</span><span id="brand-optimai-count" style="font-weight:700">—</span></div>
-          <div class="health-row"><span class="brand-nudge">Nudge Digital</span><span id="brand-nudge-count" style="font-weight:700">—</span></div>
-          <div class="health-row" style="margin-top:12px;"><span>Unhandled replies</span><span id="unhandled-count" style="font-weight:700;color:var(--yellow)">—</span></div>
+          <div class="health-row"><span class="brand-optimai">OptimAI</span><span class="mono" id="brand-optimai-count" style="font-weight:800;font-size:15px">—</span></div>
+          <div class="health-row"><span class="brand-nudge">Nudge Digital</span><span class="mono" id="brand-nudge-count" style="font-weight:800;font-size:15px">—</span></div>
+          <div class="health-row" style="margin-top:8px;"><span>Unhandled replies</span><span class="mono" id="unhandled-count" style="font-weight:800;font-size:15px;color:var(--yellow)">—</span></div>
         </div>
       </div>
     </section>
 
     <!-- ── Prospects ───────────────────────────────────────────────────── -->
     <section class="view" id="view-prospects">
-      <h2>Prospects</h2>
-      <p class="view-subtitle">All leads in the CRM</p>
+      <div class="view-head">
+        <div><h2>Prospects</h2><p class="view-subtitle">All leads in the CRM</p></div>
+        <button class="btn btn-primary btn-sm" onclick="showAddProspect()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add Prospect
+        </button>
+      </div>
 
       <div class="action-bar">
         <div class="search-bar">
@@ -394,90 +669,109 @@
             <option value="paused">Paused</option>
           </select>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="showAddProspect()">+ Add Prospect</button>
       </div>
 
-      <div class="card" style="padding:0; overflow:hidden;">
+      <div class="glass" style="padding:0; overflow:hidden;">
         <div class="table-wrap">
           <table id="prospects-table">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Company</th>
-                <th>Title</th>
-                <th>Brand</th>
-                <th>Score</th>
-                <th>Status</th>
-                <th>Last Activity</th>
-                <th></th>
-              </tr>
+              <tr><th>Name</th><th>Company</th><th>Title</th><th>Brand</th><th>Score</th><th>Status</th><th>Last Activity</th><th></th></tr>
             </thead>
-            <tbody id="prospects-tbody">
-              <tr><td colspan="8" class="loading">Loading…</td></tr>
-            </tbody>
+            <tbody id="prospects-tbody"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody>
           </table>
         </div>
       </div>
     </section>
 
+    <!-- ── Find Leads (signal-based + search-based sourcing) ──────────────── -->
+    <section class="view" id="view-findleads">
+      <div class="view-head">
+        <div><h2>Find Leads</h2><p class="view-subtitle">Source prospects from LinkedIn — signal-based or search-based</p></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="glass card">
+          <h3>Signal-Based Sourcing</h3>
+          <p class="card-sub">Paste a LinkedIn post URL — your own post, a competitor's, or an industry post. The system finds people who liked or commented on it. Engaging with relevant content is one of the strongest "in-market" signals, and these leads get a scoring bonus automatically.</p>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>LinkedIn Post URL</label>
+            <input type="text" id="signal-post-url" placeholder="https://www.linkedin.com/posts/...">
+          </div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group">
+              <label>Brand</label>
+              <select id="signal-brand"><option value="optimai">OptimAI</option><option value="nudge">Nudge Digital</option></select>
+            </div>
+            <div class="form-group">
+              <label>Signal Type</label>
+              <select id="signal-type">
+                <option value="reactions">Post likes/reactions</option>
+                <option value="comments">Post comments (stronger signal)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="runSignalScrape()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Find People Engaging
+          </button>
+        </div>
+
+        <div class="glass card">
+          <h3>Search-Based Sourcing</h3>
+          <p class="card-sub">Paste a LinkedIn Sales Navigator or People Search URL with your filters already applied (role, industry, location). The system scrapes, deduplicates, scores against your ICP, and queues anything that qualifies.</p>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>LinkedIn Search URL</label>
+            <input type="text" id="search-url" placeholder="https://www.linkedin.com/search/results/people/?keywords=...">
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>Brand</label>
+            <select id="search-brand"><option value="optimai">OptimAI</option><option value="nudge">Nudge Digital</option></select>
+          </div>
+          <button class="btn btn-glass" onclick="runSearchScrape()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Run Search Scrape
+          </button>
+        </div>
+      </div>
+
+      <div class="glass card">
+        <h3>How scoring works</h3>
+        <p class="card-sub" style="margin-bottom:0">Every sourced lead is scored 0–100 against the ICP in <code>config/icp.json</code>: role fit, industry fit, company size, geography, and intent signals. Leads sourced from post engagement get an automatic signal bonus, since active engagement with relevant content is a stronger buying signal than a cold search match. Only leads scoring above the brand's threshold (default 60) are queued for outreach — everything else is logged but not contacted. No AI is used in scoring; it's all rule-based against <code>config/icp.json</code> and <code>modules/prospecting/signals.js</code>.</p>
+      </div>
+    </section>
+
     <!-- ── Inbox ───────────────────────────────────────────────────────── -->
     <section class="view" id="view-replies">
-      <h2>Reply Inbox</h2>
-      <p class="view-subtitle">Gmail + LinkedIn replies, classified by intent</p>
+      <div class="view-head">
+        <div><h2>Reply Inbox</h2><p class="view-subtitle">Gmail + LinkedIn replies, classified by intent</p></div>
+      </div>
       <div class="action-bar">
-        <button class="btn btn-ghost" onclick="loadReplies()">⟳ Refresh</button>
-        <button class="btn btn-ghost" onclick="triggerAction('run-replies')">⊙ Check now</button>
+        <button class="btn btn-glass btn-sm" onclick="loadReplies()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+          Refresh
+        </button>
+        <button class="btn btn-glass btn-sm" onclick="triggerAction('run-replies')">Check now</button>
       </div>
-      <div id="replies-container">
-        <div class="loading">Loading…</div>
-      </div>
+      <div id="replies-container"><div class="loading">Loading…</div></div>
     </section>
 
     <!-- ── Drafts ──────────────────────────────────────────────────────── -->
     <section class="view" id="view-drafts">
-      <h2>Message Drafts</h2>
-      <p class="view-subtitle">AI-generated messages awaiting your approval</p>
-      <div id="drafts-container">
-        <div class="loading">Loading…</div>
-      </div>
+      <div class="view-head"><div><h2>Message Drafts</h2><p class="view-subtitle">Templated messages awaiting your approval</p></div></div>
+      <div id="drafts-container"><div class="loading">Loading…</div></div>
     </section>
 
     <!-- ── Sequences ───────────────────────────────────────────────────── -->
     <section class="view" id="view-sequences">
-      <h2>Sequences</h2>
-      <p class="view-subtitle">Multi-channel outreach sequences for each brand</p>
-      <div id="sequences-container">
-        <div class="loading">Loading sequence config…</div>
-      </div>
+      <div class="view-head"><div><h2>Sequences</h2><p class="view-subtitle">Multi-channel outreach sequences for each brand</p></div></div>
+      <div id="sequences-container"><div class="loading">Loading sequence config…</div></div>
     </section>
-
-    <!-- ── Reporting ───────────────────────────────────────────────────── -->
-    <section class="view" id="view-reporting">
-      <h2>Reporting</h2>
-      <p class="view-subtitle">Performance metrics and funnel analysis</p>
-      <div id="reporting-container">
-        <div class="stats-grid" id="report-stats-grid"></div>
-        <div class="card"><canvas id="funnel-chart" height="120"></canvas></div>
-        <div class="card" id="top-subjects"></div>
-      </div>
-    </section>
-
-    <!-- ── Settings ────────────────────────────────────────────────────── -->
-    <section class="view" id="view-settings">
-      <h2>Settings</h2>
-      <p class="view-subtitle">System configuration and feature flags</p>
-      <div id="settings-container">
-        <div class="loading">Loading…</div>
-      </div>
-    </section>
-
 
     <!-- ── Templates ───────────────────────────────────────────────────── -->
     <section class="view" id="view-templates">
-      <h2>Template Editor</h2>
-      <p class="view-subtitle">Edit all outreach copy directly. Changes take effect immediately — no restart needed.</p>
+      <div class="view-head"><div><h2>Template Editor</h2><p class="view-subtitle">Edit all outreach copy directly. Changes take effect immediately.</p></div></div>
 
-      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <div class="action-bar">
         <select id="tpl-brand" onchange="loadTemplateEditor()" style="width:auto">
           <option value="optimai">OptimAI</option>
           <option value="nudge">Nudge Digital</option>
@@ -491,9 +785,23 @@
         </select>
       </div>
 
-      <div id="template-editor-container">
-        <div class="loading">Loading templates…</div>
+      <div id="template-editor-container"><div class="loading">Loading templates…</div></div>
+    </section>
+
+    <!-- ── Reporting ───────────────────────────────────────────────────── -->
+    <section class="view" id="view-reporting">
+      <div class="view-head"><div><h2>Reporting</h2><p class="view-subtitle">Performance metrics and funnel analysis</p></div></div>
+      <div id="reporting-container">
+        <div class="stats-grid" id="report-stats-grid"></div>
+        <div class="glass card"><canvas id="funnel-chart" height="110"></canvas></div>
+        <div class="glass card" id="top-subjects"></div>
       </div>
+    </section>
+
+    <!-- ── Settings ────────────────────────────────────────────────────── -->
+    <section class="view" id="view-settings">
+      <div class="view-head"><div><h2>Settings</h2><p class="view-subtitle">System configuration and feature flags</p></div></div>
+      <div id="settings-container"><div class="loading">Loading…</div></div>
     </section>
 
   </main>
@@ -504,8 +812,8 @@
   <div class="modal">
     <div class="modal-header">
       <div>
-        <h2 id="modal-name">—</h2>
-        <p id="modal-sub" style="color:var(--muted);font-size:13px;margin-top:4px;"></p>
+        <h2 id="modal-name" style="font-size:20px">—</h2>
+        <p id="modal-sub" style="color:var(--muted);font-size:13px;margin-top:5px;"></p>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
@@ -513,13 +821,11 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────────
 let allProspects = [];
-let repliesBadge = 0;
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -529,7 +835,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.add('active');
     const view = item.dataset.view;
     document.getElementById(`view-${view}`).classList.add('active');
-    // Lazy load
     if (view === 'prospects') loadProspects();
     if (view === 'replies') loadReplies();
     if (view === 'drafts') loadDrafts();
@@ -573,14 +878,11 @@ async function loadOverview() {
     document.getElementById('brand-optimai-count').textContent = data.byBrand.optimai;
     document.getElementById('brand-nudge-count').textContent = data.byBrand.nudge;
     document.getElementById('unhandled-count').textContent = data.unhandledReplies;
-
     if (data.unhandledReplies > 0) {
-      document.getElementById('nav-replies').innerHTML =
-        `<span class="icon">◷</span> Inbox <span class="nav-badge">${data.unhandledReplies}</span>`;
+      document.getElementById('nav-replies').querySelector('.nav-badge')?.remove();
+      document.getElementById('nav-replies').insertAdjacentHTML('beforeend', `<span class="nav-badge">${data.unhandledReplies}</span>`);
     }
-  } catch (err) {
-    console.error('Overview load failed:', err);
-  }
+  } catch (err) { console.error('Overview load failed:', err); }
 }
 
 // ── Prospects ─────────────────────────────────────────────────────────────────
@@ -596,23 +898,20 @@ async function loadProspects() {
 
 function renderProspects(prospects) {
   const tbody = document.getElementById('prospects-tbody');
-  if (!prospects.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="loading">No prospects found.</td></tr>';
-    return;
-  }
+  if (!prospects.length) { tbody.innerHTML = '<tr><td colspan="8" class="loading">No prospects found.</td></tr>'; return; }
   tbody.innerHTML = prospects.map(p => `
     <tr>
       <td><strong>${p.first_name} ${p.last_name}</strong></td>
       <td>${p.company || '—'}</td>
       <td style="color:var(--muted)">${p.title || '—'}</td>
       <td><span class="brand-${p.brand}">${p.brand === 'optimai' ? 'OptimAI' : 'Nudge'}</span></td>
-      <td>${p.icp_score ? `<strong>${p.icp_score}</strong>/100` : '—'}</td>
+      <td class="mono">${p.icp_score ? `<strong>${p.icp_score}</strong><span style="color:var(--faint)">/100</span>` : '—'}</td>
       <td><span class="badge badge-${p.status}">${p.status?.replace(/_/g,' ') || '—'}</span></td>
-      <td style="color:var(--muted);font-size:12px">${formatDate(p.last_activity)}</td>
+      <td style="color:var(--muted);font-size:12px" class="mono">${formatDate(p.last_activity)}</td>
       <td>
         <button class="btn btn-ghost btn-sm" onclick="showProspect('${p.id}')">View</button>
-        <select style="width:auto;padding:4px 8px;font-size:11px;margin-left:4px" onchange="updateStatus('${p.id}', this.value)">
-          <option value="">Change status…</option>
+        <select style="width:auto;padding:5px 8px;font-size:11px;margin-left:4px;display:inline-block" onchange="updateStatus('${p.id}', this.value)">
+          <option value="">Change…</option>
           <option value="queued">Queued</option>
           <option value="active">Active</option>
           <option value="paused">Paused</option>
@@ -641,13 +940,8 @@ function filterProspects() {
 
 async function updateStatus(id, status) {
   if (!status) return;
-  try {
-    await api(`/prospects/${id}`, 'PATCH', { status });
-    toast(`Status updated to ${status}`);
-    loadProspects();
-  } catch (err) {
-    toast(`Error: ${err.message}`, 'error');
-  }
+  try { await api(`/prospects/${id}`, 'PATCH', { status }); toast(`Status updated to ${status}`); loadProspects(); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
 async function showProspect(id) {
@@ -656,34 +950,30 @@ async function showProspect(id) {
     document.getElementById('modal-name').textContent = `${data.first_name} ${data.last_name}`;
     document.getElementById('modal-sub').textContent = `${data.title} at ${data.company} · ${data.location || ''}`;
     document.getElementById('modal-content').innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;font-size:13px;">
-        <div><span style="color:var(--muted)">Brand</span><br><strong class="brand-${data.brand}">${data.brand}</strong></div>
-        <div><span style="color:var(--muted)">ICP Score</span><br><strong>${data.icp_score || '—'}/100</strong></div>
-        <div><span style="color:var(--muted)">Status</span><br><span class="badge badge-${data.status}">${data.status}</span></div>
-        <div><span style="color:var(--muted)">Email</span><br>${data.email || '—'}</div>
-        <div><span style="color:var(--muted)">Source</span><br>${data.source || '—'}</div>
-        <div><span style="color:var(--muted)">Tech Stack</span><br style="font-size:11px">${data.tech_stack || '—'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;font-size:13px;">
+        <div><span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Brand</span><br><strong class="brand-${data.brand}">${data.brand}</strong></div>
+        <div><span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.05em">ICP Score</span><br><strong class="mono">${data.icp_score || '—'}/100</strong></div>
+        <div><span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Status</span><br><span class="badge badge-${data.status}">${data.status}</span></div>
+        <div><span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Email</span><br>${data.email || '—'}</div>
       </div>
-      ${data.notes ? `<div style="background:var(--surface2);border-radius:6px;padding:12px;font-size:12px;color:var(--muted);margin-bottom:20px">${data.notes}</div>` : ''}
-      <h3 style="margin-bottom:12px;font-size:14px">Timeline (${data.messages?.length || 0} touchpoints)</h3>
+      ${data.notes ? `<div class="glass" style="padding:14px;font-size:12px;color:var(--text-dim);margin-bottom:22px">${data.notes}</div>` : ''}
+      <h3 style="margin-bottom:14px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">Timeline · ${data.messages?.length || 0} touchpoints</h3>
       <ul class="timeline">
         ${(data.messages || []).map(m => `
           <li class="timeline-item ${m.channel}">
-            <div class="timeline-label">${formatDate(m.sent_at)} · ${m.channel} · Step ${m.step} · <span class="badge badge-${m.status}">${m.status}</span></div>
+            <div class="timeline-label">${formatDate(m.sent_at)} · ${m.channel} · step ${m.step} · ${m.status}</div>
             <div class="timeline-content">${m.subject ? `<strong>${m.subject}</strong><br>` : ''}${(m.body || '').substring(0, 200)}${m.body?.length > 200 ? '…' : ''}</div>
           </li>
         `).join('')}
         ${!data.messages?.length ? '<li class="timeline-item"><div class="timeline-content" style="color:var(--muted)">No messages sent yet.</div></li>' : ''}
       </ul>
-      <div style="display:flex;gap:10px;margin-top:20px;">
-        ${data.linkedin_url ? `<a href="${data.linkedin_url}" target="_blank" class="btn btn-ghost btn-sm">↗ LinkedIn</a>` : ''}
-        ${data.website ? `<a href="${data.website}" target="_blank" class="btn btn-ghost btn-sm">↗ Website</a>` : ''}
+      <div style="display:flex;gap:10px;margin-top:22px;">
+        ${data.linkedin_url ? `<a href="${data.linkedin_url}" target="_blank" class="btn btn-glass btn-sm">↗ LinkedIn</a>` : ''}
+        ${data.website ? `<a href="${data.website}" target="_blank" class="btn btn-glass btn-sm">↗ Website</a>` : ''}
       </div>
     `;
     document.getElementById('prospect-modal').classList.add('open');
-  } catch (err) {
-    toast(`Error: ${err.message}`, 'error');
-  }
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
 function closeModal() { document.getElementById('prospect-modal').classList.remove('open'); }
@@ -694,44 +984,33 @@ async function loadReplies() {
   document.getElementById('replies-container').innerHTML = '<div class="loading">Loading…</div>';
   try {
     const replies = await api('/replies');
-    if (!replies.length) {
-      document.getElementById('replies-container').innerHTML = '<div class="card" style="text-align:center;color:var(--muted)">No unhandled replies. ✓</div>';
-      return;
-    }
+    if (!replies.length) { document.getElementById('replies-container').innerHTML = '<div class="glass card" style="text-align:center;color:var(--muted)">No unhandled replies. ✓</div>'; return; }
     document.getElementById('replies-container').innerHTML = replies.map(r => `
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div class="glass card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
           <div>
             <strong>${r.prospect?.first_name || '?'} ${r.prospect?.last_name || ''}</strong>
-            <span style="color:var(--muted);margin:0 8px">·</span>
+            <span style="color:var(--faint);margin:0 8px">·</span>
             <span style="color:var(--muted);font-size:12px">${r.prospect?.company || '?'}</span>
-            <span style="color:var(--muted);margin:0 8px">·</span>
-            <span style="font-size:11px">${r.channel}</span>
+            <span style="color:var(--faint);margin:0 8px">·</span>
+            <span style="font-size:11px;color:var(--muted)">${r.channel}</span>
           </div>
           <span class="badge badge-${r.intent}">${r.intent?.replace(/_/g,' ') || '?'}</span>
         </div>
-        <div style="background:var(--surface2);border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap;margin-bottom:12px">${r.content || '—'}</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">→ ${r.action_required || '—'}</div>
+        <div class="glass" style="padding:14px;font-size:13px;white-space:pre-wrap;margin-bottom:14px">${r.content || '—'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">→ ${r.action_required || '—'}</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-success btn-sm" onclick="handleReply('${r.reply_id}')">✓ Mark handled</button>
           ${r.prospect?.id ? `<button class="btn btn-ghost btn-sm" onclick="showProspect('${r.prospect.id}')">View prospect</button>` : ''}
         </div>
       </div>
     `).join('');
-  } catch (err) {
-    document.getElementById('replies-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
-  }
+  } catch (err) { document.getElementById('replies-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`; }
 }
 
 async function handleReply(id) {
-  try {
-    await api(`/replies/${id}/handle`, 'POST');
-    toast('Marked as handled');
-    loadReplies();
-    loadOverview();
-  } catch (err) {
-    toast(`Error: ${err.message}`, 'error');
-  }
+  try { await api(`/replies/${id}/handle`, 'POST'); toast('Marked as handled'); loadReplies(); loadOverview(); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
 // ── Drafts ────────────────────────────────────────────────────────────────────
@@ -739,59 +1018,47 @@ async function loadDrafts() {
   document.getElementById('drafts-container').innerHTML = '<div class="loading">Loading…</div>';
   try {
     const drafts = await api('/drafts');
-    if (!drafts.length) {
-      document.getElementById('drafts-container').innerHTML = '<div class="card" style="text-align:center;color:var(--muted)">No pending drafts.</div>';
-      return;
-    }
+    if (!drafts.length) { document.getElementById('drafts-container').innerHTML = '<div class="glass card" style="text-align:center;color:var(--muted)">No pending drafts.</div>'; return; }
     document.getElementById('drafts-container').innerHTML = drafts.map(d => `
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="glass card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <div>
             <strong>${d.prospect?.first_name || '?'} ${d.prospect?.last_name || ''}</strong>
-            <span style="color:var(--muted);margin:0 8px">·</span>
+            <span style="color:var(--faint);margin:0 8px">·</span>
             <span style="color:var(--muted);font-size:12px">${d.prospect?.company || '?'}</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <span style="font-size:11px;color:var(--muted)">${d.channel} · Step ${d.step}</span>
+            <span style="font-size:11px;color:var(--muted)">${d.channel} · step ${d.step}</span>
             <span class="badge badge-queued">Draft</span>
           </div>
         </div>
-        ${d.subject ? `<div style="font-size:13px;font-weight:600;margin-bottom:8px">${d.subject}</div>` : ''}
-        <div style="background:var(--surface2);border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap;margin-bottom:12px;max-height:200px;overflow-y:auto">${d.body || '—'}</div>
+        ${d.subject ? `<div style="font-size:13px;font-weight:700;margin-bottom:10px">${d.subject}</div>` : ''}
+        <div class="glass" style="padding:14px;font-size:13px;white-space:pre-wrap;margin-bottom:14px;max-height:200px;overflow-y:auto">${d.body || '—'}</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-success btn-sm" onclick="approveDraft('${d.message_id}')">✓ Send</button>
           <button class="btn btn-danger btn-sm" onclick="rejectDraft('${d.message_id}')">✕ Reject</button>
         </div>
       </div>
     `).join('');
-  } catch (err) {
-    document.getElementById('drafts-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
-  }
+  } catch (err) { document.getElementById('drafts-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`; }
 }
 
 async function approveDraft(id) {
-  try {
-    const r = await api(`/drafts/${id}/approve`, 'POST');
-    if (r.success) { toast('Message sent!'); loadDrafts(); }
-    else toast(r.error || 'Send failed', 'error');
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { const r = await api(`/drafts/${id}/approve`, 'POST'); if (r.success) { toast('Message sent!'); loadDrafts(); } else toast(r.error || 'Send failed', 'error'); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
-
 async function rejectDraft(id) {
-  try {
-    await api(`/drafts/${id}`, 'DELETE');
-    toast('Draft rejected');
-    loadDrafts();
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { await api(`/drafts/${id}`, 'DELETE'); toast('Draft rejected'); loadDrafts(); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
 // ── Sequences ─────────────────────────────────────────────────────────────────
 async function loadSequences() {
-  const seqs = await fetch('/config/sequences.json').then(r => r.json()).catch(() => null);
+  const seqs = await api('/sequences').catch(() => null);
   if (!seqs) { document.getElementById('sequences-container').innerHTML = '<div class="loading" style="color:var(--red)">Could not load sequences.</div>'; return; }
   const brands = Object.keys(seqs);
   document.getElementById('sequences-container').innerHTML = brands.map(brand => `
-    <div class="card">
+    <div class="glass card">
       <h3 class="brand-${brand}">${brand === 'optimai' ? 'OptimAI' : 'Nudge Digital'} Sequence</h3>
       <div class="table-wrap">
         <table>
@@ -799,9 +1066,9 @@ async function loadSequences() {
           <tbody>
             ${seqs[brand].map(s => `
               <tr>
-                <td>${s.step_number}</td>
+                <td class="mono">${s.step_number}</td>
                 <td><span class="badge badge-${s.channel.startsWith('linkedin') ? 'active' : 'queued'}">${s.channel}</span></td>
-                <td>+${s.day_offset}d</td>
+                <td class="mono">+${s.day_offset}d</td>
                 <td>${s.goal?.replace(/_/g,' ') || '—'}</td>
                 <td style="color:var(--muted);font-size:12px">${s.notes || '—'}</td>
               </tr>
@@ -818,34 +1085,26 @@ async function loadReporting() {
   try {
     const data = await api('/reporting');
     document.getElementById('report-stats-grid').innerHTML = `
-      <div class="stat-card blue"><div class="label">Total Sent</div><div class="value">${data.totalSent}</div></div>
-      <div class="stat-card yellow"><div class="label">Total Replied</div><div class="value">${data.totalReplied}</div></div>
-      <div class="stat-card green"><div class="label">Reply Rate</div><div class="value">${data.replyRate}%</div></div>
+      <div class="glass stat-card indigo"><div class="label">Total Sent</div><div class="value">${data.totalSent}</div></div>
+      <div class="glass stat-card amber"><div class="label">Total Replied</div><div class="value">${data.totalReplied}</div></div>
+      <div class="glass stat-card green"><div class="label">Reply Rate</div><div class="value">${data.replyRate}%</div></div>
     `;
-
-    // Top subjects
     const topSubjectsHtml = data.topSubjects?.length ? `
-      <h3 style="margin-bottom:12px">Top Performing Subject Lines</h3>
+      <h3 style="margin-bottom:14px">Top Performing Subject Lines</h3>
       <table><thead><tr><th>Subject</th><th>Sent</th><th>Replied</th><th>Rate</th></tr></thead>
-      <tbody>${data.topSubjects.map(s => `<tr><td>${s.subject}</td><td>${s.sent}</td><td>${s.replied}</td><td>${(s.rate*100).toFixed(1)}%</td></tr>`).join('')}</tbody>
+      <tbody>${data.topSubjects.map(s => `<tr><td>${s.subject}</td><td class="mono">${s.sent}</td><td class="mono">${s.replied}</td><td class="mono">${(s.rate*100).toFixed(1)}%</td></tr>`).join('')}</tbody>
       </table>
     ` : '<p style="color:var(--muted)">No data yet.</p>';
     document.getElementById('top-subjects').innerHTML = topSubjectsHtml;
 
-    // Funnel chart
     const ctx = document.getElementById('funnel-chart').getContext('2d');
     const statuses = Object.keys(data.statusCounts || {});
     new Chart(ctx, {
       type: 'bar',
-      data: {
-        labels: statuses.map(s => s.replace(/_/g,' ')),
-        datasets: [{ label: 'Prospects', data: statuses.map(s => data.statusCounts[s]), backgroundColor: '#5b7cf6' }]
-      },
-      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#2d3148' } }, y: { grid: { color: '#2d3148' } } } }
+      data: { labels: statuses.map(s => s.replace(/_/g,' ')), datasets: [{ label: 'Prospects', data: statuses.map(s => data.statusCounts[s]), backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 6, borderSkipped: false }] },
+      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#797c8a' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#797c8a' } } } }
     });
-  } catch (err) {
-    document.getElementById('reporting-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
-  }
+  } catch (err) { document.getElementById('reporting-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`; }
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
@@ -862,41 +1121,57 @@ async function loadSettings() {
       ['CASE_STUDIES', 'Recent case studies / wins (for nurture emails)'],
     ];
     document.getElementById('settings-container').innerHTML = `
-      <div class="card">
+      <div class="glass card">
         <h3>System Settings</h3>
-        <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:14px">
           ${keys.map(([k, label]) => `
-            <div class="health-row" style="align-items:flex-start;flex-direction:column;gap:6px">
+            <div class="health-row" style="align-items:flex-start;flex-direction:column;gap:7px">
               <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">${label}</label>
               <div style="display:flex;gap:8px;width:100%">
                 <input type="text" value="${settings[k] || ''}" id="setting-${k}" style="flex:1">
-                <button class="btn btn-ghost btn-sm" onclick="saveSetting('${k}')">Save</button>
+                <button class="btn btn-glass btn-sm" onclick="saveSetting('${k}')">Save</button>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
     `;
-  } catch (err) {
-    document.getElementById('settings-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
-  }
+  } catch (err) { document.getElementById('settings-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`; }
 }
 
 async function saveSetting(key) {
   const value = document.getElementById(`setting-${key}`)?.value;
-  try {
-    await api('/settings', 'POST', { key, value });
-    toast('Setting saved');
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { await api('/settings', 'POST', { key, value }); toast('Setting saved'); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
 async function triggerAction(action) {
+  try { toast(`Starting ${action.replace(/-/g,' ')}…`); const r = await api(`/actions/${action}`, 'POST', {}); toast(r.message || 'Done'); setTimeout(loadOverview, 2000); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+// ── Find Leads ────────────────────────────────────────────────────────────────
+async function runSignalScrape() {
+  const postUrl = document.getElementById('signal-post-url').value.trim();
+  const brand = document.getElementById('signal-brand').value;
+  const signalType = document.getElementById('signal-type').value;
+  if (!postUrl) { toast('Paste a LinkedIn post URL first', 'error'); return; }
   try {
-    toast(`Starting ${action.replace(/-/g,' ')}…`);
-    const r = await api(`/actions/${action}`, 'POST', {});
-    toast(r.message || 'Done');
-    setTimeout(loadOverview, 2000);
+    toast('Scanning post engagement…');
+    const r = await api('/actions/scrape-signals', 'POST', { postUrl, brand, signalType });
+    toast(r.message || 'Signal scrape started — check Prospects in a few minutes');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function runSearchScrape() {
+  const searchUrl = document.getElementById('search-url').value.trim();
+  const brand = document.getElementById('search-brand').value;
+  if (!searchUrl) { toast('Paste a LinkedIn search URL first', 'error'); return; }
+  try {
+    toast('Starting search scrape…');
+    const r = await api('/actions/scrape-linkedin', 'POST', { searchUrl, brand });
+    toast(r.message || 'Search scrape started — check Prospects in a few minutes');
   } catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
@@ -920,7 +1195,7 @@ function showAddProspect() {
         <select id="np-brand"><option value="optimai">OptimAI</option><option value="nudge">Nudge Digital</option></select>
       </div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:20px">
+    <div style="display:flex;gap:10px;margin-top:22px">
       <button class="btn btn-primary" onclick="submitProspect()">Add to CRM</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
     </div>
@@ -930,48 +1205,23 @@ function showAddProspect() {
 
 async function submitProspect() {
   const data = {
-    first_name: document.getElementById('np-fn').value,
-    last_name: document.getElementById('np-ln').value,
-    title: document.getElementById('np-title').value,
-    company: document.getElementById('np-company').value,
-    email: document.getElementById('np-email').value,
-    linkedin_url: document.getElementById('np-li').value,
-    website: document.getElementById('np-web').value,
-    location: document.getElementById('np-loc').value,
-    industry: document.getElementById('np-industry').value,
-    company_size: document.getElementById('np-size').value,
+    first_name: document.getElementById('np-fn').value, last_name: document.getElementById('np-ln').value,
+    title: document.getElementById('np-title').value, company: document.getElementById('np-company').value,
+    email: document.getElementById('np-email').value, linkedin_url: document.getElementById('np-li').value,
+    website: document.getElementById('np-web').value, location: document.getElementById('np-loc').value,
+    industry: document.getElementById('np-industry').value, company_size: document.getElementById('np-size').value,
     brand: document.getElementById('np-brand').value
   };
-  try {
-    await api('/prospects', 'POST', data);
-    toast('Prospect added!');
-    closeModal();
-    loadProspects();
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { await api('/prospects', 'POST', data); toast('Prospect added!'); closeModal(); loadProspects(); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
-
-// ── Utils ─────────────────────────────────────────────────────────────────────
-function formatDate(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  const diff = (Date.now() - d) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-  return d.toLocaleDateString('en-AU', { day:'numeric', month:'short' });
-}
-
 
 // ── Template Editor ───────────────────────────────────────────────────────────
 let allTemplates = {};
 
 async function loadTemplateEditor() {
-  try {
-    allTemplates = await api('/templates');
-    renderTemplateSection();
-  } catch (err) {
-    document.getElementById('template-editor-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
-  }
+  try { allTemplates = await api('/templates'); renderTemplateSection(); }
+  catch (err) { document.getElementById('template-editor-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`; }
 }
 
 function renderTemplateSection() {
@@ -979,45 +1229,42 @@ function renderTemplateSection() {
   const type = document.getElementById('tpl-type').value;
   const brandData = allTemplates[brand];
   if (!brandData) return;
-
   const container = document.getElementById('template-editor-container');
 
   if (type === 'email_sequences') {
     const steps = brandData.email_sequences || [];
     container.innerHTML = steps.map((step, idx) => `
-      <div class="card" style="margin-bottom:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="glass card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
           <h3 style="margin:0">Step ${step.step_number} — ${step.goal?.replace(/_/g,' ')} <span style="color:var(--muted);font-weight:400;font-size:12px">(day +${step.day_offset})</span></h3>
           <span class="badge badge-${step.active ? 'active' : 'paused'}">${step.active ? 'active' : 'paused'}</span>
         </div>
-
-        <div class="form-group" style="margin-bottom:12px">
+        <div class="form-group" style="margin-bottom:14px">
           <label>Subject A</label>
           <input type="text" id="tpl-${brand}-email-${idx}-subA" value="${escHtml(Array.isArray(step.subject) ? step.subject[0] : step.subject)}">
         </div>
-        <div class="form-group" style="margin-bottom:12px">
+        <div class="form-group" style="margin-bottom:14px">
           <label>Subject B <span style="color:var(--muted);font-weight:400">(A/B variant)</span></label>
           <input type="text" id="tpl-${brand}-email-${idx}-subB" value="${escHtml(Array.isArray(step.subject) && step.subject[1] ? step.subject[1] : '')}">
         </div>
-        <div class="form-group" style="margin-bottom:12px">
+        <div class="form-group" style="margin-bottom:14px">
           <label>Body <span style="color:var(--muted);font-weight:400">— use {{first_name}}, {{company}}, {{industry}}, {{calendly_url}}</span></label>
-          <textarea id="tpl-${brand}-email-${idx}-body" rows="10" style="font-family:monospace;font-size:12px;resize:vertical">${escHtml(step.body)}</textarea>
+          <textarea id="tpl-${brand}-email-${idx}-body" rows="10" style="resize:vertical">${escHtml(step.body)}</textarea>
         </div>
         <div style="display:flex;gap:10px">
           <button class="btn btn-primary btn-sm" onclick="saveEmailTemplate('${brand}', ${idx})">Save</button>
           <button class="btn btn-ghost btn-sm" onclick="previewEmailTemplate('${brand}', ${idx})">Preview</button>
         </div>
-        <div id="tpl-preview-${brand}-email-${idx}" style="display:none;margin-top:12px;background:var(--surface2);border-radius:6px;padding:16px;font-size:13px;white-space:pre-wrap;font-family:monospace"></div>
+        <div id="tpl-preview-${brand}-email-${idx}" style="display:none;margin-top:14px" class="glass card"></div>
       </div>
     `).join('');
-
   } else if (type === 'linkedin_connect') {
     const note = brandData.linkedin_connect_note || '';
     container.innerHTML = `
-      <div class="card">
+      <div class="glass card">
         <h3>Connection Request Note</h3>
-        <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Hard limit: 300 characters. Sent with every connection request.</p>
-        <div class="form-group" style="margin-bottom:12px">
+        <p style="color:var(--muted);font-size:12px;margin-bottom:14px">Hard limit: 300 characters.</p>
+        <div class="form-group" style="margin-bottom:14px">
           <label>Note <span style="color:var(--muted);font-weight:400">— use {{first_name}}, {{company}}, {{industry}}</span></label>
           <textarea id="tpl-${brand}-li-connect" rows="4" maxlength="300" style="resize:vertical">${escHtml(note)}</textarea>
           <div style="color:var(--muted);font-size:11px;margin-top:4px" id="li-char-count">${note.length}/300 chars</div>
@@ -1025,23 +1272,16 @@ function renderTemplateSection() {
         <button class="btn btn-primary btn-sm" onclick="saveLiConnectTemplate('${brand}')">Save</button>
       </div>
     `;
-    document.getElementById('tpl-'+brand+'-li-connect')?.addEventListener('input', function() {
-      document.getElementById('li-char-count').textContent = this.value.length + '/300 chars';
-    });
-
+    document.getElementById('tpl-'+brand+'-li-connect')?.addEventListener('input', function() { document.getElementById('li-char-count').textContent = this.value.length + '/300 chars'; });
   } else if (type === 'linkedin_messages') {
     const msgs = brandData.linkedin_messages || [];
     container.innerHTML = msgs.length ? msgs.map((msg, idx) => `
-      <div class="card" style="margin-bottom:20px">
+      <div class="glass card" style="margin-bottom:20px">
         <h3>LI Message — Step ${msg.step_number} <span style="color:var(--muted);font-weight:400;font-size:12px">(${msg.trigger || 'post_connection'}, day +${msg.day_offset})</span></h3>
-        <div class="form-group" style="margin-bottom:12px">
-          <label>Message body</label>
-          <textarea id="tpl-${brand}-li-msg-${idx}" rows="8" style="resize:vertical">${escHtml(msg.body)}</textarea>
-        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Message body</label><textarea id="tpl-${brand}-li-msg-${idx}" rows="8" style="resize:vertical">${escHtml(msg.body)}</textarea></div>
         <button class="btn btn-primary btn-sm" onclick="saveLiMsgTemplate('${brand}', ${idx})">Save</button>
       </div>
-    `).join('') : '<div class="card" style="color:var(--muted)">No LinkedIn message templates for this brand yet.</div>';
-
+    `).join('') : '<div class="glass card" style="color:var(--muted)">No LinkedIn message templates for this brand yet.</div>';
   } else if (type === 'nurture_emails') {
     const nurture = brandData.nurture_emails || {};
     const tracks = [
@@ -1053,21 +1293,14 @@ function renderTemplateSection() {
     container.innerHTML = tracks.map(({ key, label }) => {
       const t = nurture[key] || { subject: '', body: '' };
       return `
-        <div class="card" style="margin-bottom:20px">
+        <div class="glass card" style="margin-bottom:20px">
           <h3>${label}</h3>
-          <div class="form-group" style="margin-bottom:12px">
-            <label>Subject</label>
-            <input type="text" id="tpl-${brand}-nurture-${key}-sub" value="${escHtml(t.subject)}">
-          </div>
-          <div class="form-group" style="margin-bottom:12px">
-            <label>Body</label>
-            <textarea id="tpl-${brand}-nurture-${key}-body" rows="10" style="resize:vertical;font-size:12px;font-family:monospace">${escHtml(t.body)}</textarea>
-          </div>
+          <div class="form-group" style="margin-bottom:14px"><label>Subject</label><input type="text" id="tpl-${brand}-nurture-${key}-sub" value="${escHtml(t.subject)}"></div>
+          <div class="form-group" style="margin-bottom:14px"><label>Body</label><textarea id="tpl-${brand}-nurture-${key}-body" rows="10" style="resize:vertical">${escHtml(t.body)}</textarea></div>
           <button class="btn btn-primary btn-sm" onclick="saveNurtureTemplate('${brand}', '${key}')">Save</button>
         </div>
       `;
     }).join('');
-
   } else if (type === 'reply_templates') {
     const replies = brandData.reply_templates || {};
     const replyTypes = [
@@ -1077,20 +1310,16 @@ function renderTemplateSection() {
     container.innerHTML = replyTypes.map(({ key, label }) => {
       const body = replies[key] || '';
       return `
-        <div class="card" style="margin-bottom:20px">
+        <div class="glass card" style="margin-bottom:20px">
           <h3>${label}</h3>
-          <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Used as a starting point — always review before sending.</p>
-          <div class="form-group" style="margin-bottom:12px">
-            <textarea id="tpl-${brand}-reply-${key}" rows="8" style="resize:vertical;font-size:12px;font-family:monospace">${escHtml(body)}</textarea>
-          </div>
+          <p style="color:var(--muted);font-size:12px;margin-bottom:14px">Used as a starting point — always review before sending.</p>
+          <div class="form-group" style="margin-bottom:14px"><textarea id="tpl-${brand}-reply-${key}" rows="8" style="resize:vertical">${escHtml(body)}</textarea></div>
           <button class="btn btn-primary btn-sm" onclick="saveReplyTemplate('${brand}', '${key}')">Save</button>
         </div>
       `;
     }).join('');
   }
 }
-
-// ── Save functions ─────────────────────────────────────────────────────────────
 
 async function saveEmailTemplate(brand, idx) {
   const subA = document.getElementById(`tpl-${brand}-email-${idx}-subA`)?.value;
@@ -1100,27 +1329,18 @@ async function saveEmailTemplate(brand, idx) {
     await api('/templates', 'PATCH', { path: `${brand}.email_sequences.${idx}.subject`, value: subB ? [subA, subB] : [subA] });
     await api('/templates', 'PATCH', { path: `${brand}.email_sequences.${idx}.body`, value: body });
     toast('Template saved');
-    allTemplates[brand].email_sequences[idx].subject = subB ? [subA, subB] : [subA];
-    allTemplates[brand].email_sequences[idx].body = body;
   } catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
-
 async function saveLiConnectTemplate(brand) {
   const note = document.getElementById(`tpl-${brand}-li-connect`)?.value;
-  try {
-    await api('/templates', 'PATCH', { path: `${brand}.linkedin_connect_note`, value: note });
-    toast('Connection note saved');
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { await api('/templates', 'PATCH', { path: `${brand}.linkedin_connect_note`, value: note }); toast('Connection note saved'); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
-
 async function saveLiMsgTemplate(brand, idx) {
   const body = document.getElementById(`tpl-${brand}-li-msg-${idx}`)?.value;
-  try {
-    await api('/templates', 'PATCH', { path: `${brand}.linkedin_messages.${idx}.body`, value: body });
-    toast('LinkedIn message saved');
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { await api('/templates', 'PATCH', { path: `${brand}.linkedin_messages.${idx}.body`, value: body }); toast('LinkedIn message saved'); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
-
 async function saveNurtureTemplate(brand, key) {
   const sub = document.getElementById(`tpl-${brand}-nurture-${key}-sub`)?.value;
   const body = document.getElementById(`tpl-${brand}-nurture-${key}-body`)?.value;
@@ -1130,41 +1350,39 @@ async function saveNurtureTemplate(brand, key) {
     toast('Nurture template saved');
   } catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
-
 async function saveReplyTemplate(brand, key) {
   const body = document.getElementById(`tpl-${brand}-reply-${key}`)?.value;
-  try {
-    await api('/templates', 'PATCH', { path: `${brand}.reply_templates.${key}`, value: body });
-    toast('Reply template saved');
-  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+  try { await api('/templates', 'PATCH', { path: `${brand}.reply_templates.${key}`, value: body }); toast('Reply template saved'); }
+  catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
 
-// ── Preview ────────────────────────────────────────────────────────────────────
-async function previewEmailTemplate(brand, idx) {
+function previewEmailTemplate(brand, idx) {
   const body = document.getElementById(`tpl-${brand}-email-${idx}-body`)?.value || '';
   const subA = document.getElementById(`tpl-${brand}-email-${idx}-subA`)?.value || '';
   const previewEl = document.getElementById(`tpl-preview-${brand}-email-${idx}`);
   if (!previewEl) return;
-
-  // Client-side render with sample data
   const sample = { first_name: 'Alex', last_name: 'Chen', company: 'Acme Co', title: 'CEO', industry: 'SaaS', location: 'Melbourne', website: 'acme.com', sender_name: 'Harrison', sender_company: brand === 'optimai' ? 'OptimAI' : 'Nudge Digital', sender_website: brand === 'optimai' ? 'optimai.com.au' : 'nudgedigital.com.au', calendly_url: 'calendly.com/your-link' };
-  const rendered = Object.entries(sample).reduce((t, [k, v]) => t.replace(new RegExp('\{\{'+k+'\}\}', 'g'), v), body);
-  const renderedSub = Object.entries(sample).reduce((t, [k, v]) => t.replace(new RegExp('\{\{'+k+'\}\}', 'g'), v), subA);
-
+  const rendered = Object.entries(sample).reduce((t, [k, v]) => t.replace(new RegExp('\\{\\{'+k+'\\}\\}', 'g'), v), body);
+  const renderedSub = Object.entries(sample).reduce((t, [k, v]) => t.replace(new RegExp('\\{\\{'+k+'\\}\\}', 'g'), v), subA);
   previewEl.style.display = 'block';
-  previewEl.innerHTML = `<strong style="color:var(--muted);font-size:11px">SUBJECT:</strong> ${escHtml(renderedSub)}
-
-<strong style="color:var(--muted);font-size:11px">BODY:</strong>
-${escHtml(rendered)}`;
+  previewEl.innerHTML = `<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Subject</div><div style="font-weight:700;margin-bottom:16px">${escHtml(renderedSub)}</div><div style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Body</div><div style="white-space:pre-wrap;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--text-dim)">${escHtml(rendered)}</div>`;
 }
 
-function escHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function escHtml(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const diff = (Date.now() - d) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return d.toLocaleDateString('en-AU', { day:'numeric', month:'short' });
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadOverview();
-setInterval(loadOverview, 60000); // Refresh overview every minute
+setInterval(loadOverview, 60000);
 </script>
 </body>
 </html>
