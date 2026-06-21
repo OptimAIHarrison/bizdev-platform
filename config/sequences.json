@@ -1,0 +1,282 @@
+{
+  "optimai": [
+    {
+      "sequence_id": "optimai-email-1",
+      "brand": "optimai",
+      "step_number": 1,
+      "channel": "email",
+      "day_offset": 0,
+      "subject_template": [
+        "Quick thought on {{company}}'s operations",
+        "{{first_name}} — noticed something about {{company}}"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "warm_up",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "AI-personalised observation about an inefficiency or opportunity based on their website/job ads/company stage"
+    },
+    {
+      "sequence_id": "optimai-email-2",
+      "brand": "optimai",
+      "step_number": 2,
+      "channel": "email",
+      "day_offset": 3,
+      "subject_template": [
+        "How we helped a similar {{industry}} business",
+        "{{first_name}} — a quick before/after"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "establish_credibility",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "A short case study or before/after relevant to their industry"
+    },
+    {
+      "sequence_id": "optimai-email-3",
+      "brand": "optimai",
+      "step_number": 3,
+      "channel": "email",
+      "day_offset": 7,
+      "subject_template": [
+        "Still worth 15 mins?",
+        "{{first_name}} — one quick question"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "ask_for_meeting",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "Ultra-short, direct ask for a call"
+    },
+    {
+      "sequence_id": "optimai-email-4",
+      "brand": "optimai",
+      "step_number": 4,
+      "channel": "email",
+      "day_offset": 14,
+      "subject_template": [
+        "Closing your file",
+        "Moving on (but leaving the door open)"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "break_up",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "The break-up email that often re-activates cold leads"
+    },
+    {
+      "sequence_id": "optimai-li-1",
+      "brand": "optimai",
+      "step_number": 1,
+      "channel": "linkedin_view",
+      "day_offset": 0,
+      "subject_template": null,
+      "message_template": null,
+      "goal": "warm_up",
+      "ab_variant": null,
+      "active": true,
+      "notes": "View profile to trigger notification — 24-48hrs before connection"
+    },
+    {
+      "sequence_id": "optimai-li-2",
+      "brand": "optimai",
+      "step_number": 2,
+      "channel": "linkedin_like",
+      "day_offset": 1,
+      "subject_template": null,
+      "message_template": null,
+      "goal": "warm_up",
+      "ab_variant": null,
+      "active": true,
+      "notes": "Like most recent post if posted in last 30 days"
+    },
+    {
+      "sequence_id": "optimai-li-3",
+      "brand": "optimai",
+      "step_number": 3,
+      "channel": "linkedin_connect",
+      "day_offset": 2,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "connect",
+      "ab_variant": null,
+      "active": true,
+      "notes": "Connection request with personalised note — max 300 chars"
+    },
+    {
+      "sequence_id": "optimai-li-4",
+      "brand": "optimai",
+      "step_number": 4,
+      "channel": "linkedin_message",
+      "day_offset": 0,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "warm_up",
+      "ab_variant": null,
+      "active": true,
+      "trigger": "connection_accepted",
+      "notes": "Value-first opener after connection accepted — no pitch"
+    },
+    {
+      "sequence_id": "optimai-li-5",
+      "brand": "optimai",
+      "step_number": 5,
+      "channel": "linkedin_message",
+      "day_offset": 6,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "establish_credibility",
+      "ab_variant": null,
+      "active": true,
+      "trigger": "post_connection",
+      "notes": "Soft problem-acknowledgement message"
+    },
+    {
+      "sequence_id": "optimai-li-6",
+      "brand": "optimai",
+      "step_number": 6,
+      "channel": "linkedin_message",
+      "day_offset": 13,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "establish_credibility",
+      "ab_variant": null,
+      "active": true,
+      "trigger": "post_connection",
+      "notes": "Case study or social proof nudge"
+    },
+    {
+      "sequence_id": "optimai-li-7",
+      "brand": "optimai",
+      "step_number": 7,
+      "channel": "linkedin_message",
+      "day_offset": 23,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "ask_for_meeting",
+      "ab_variant": null,
+      "active": true,
+      "trigger": "post_connection",
+      "notes": "Direct but respectful CTA — book a call or reply with interest"
+    }
+  ],
+  "nudge": [
+    {
+      "sequence_id": "nudge-email-1",
+      "brand": "nudge",
+      "step_number": 1,
+      "channel": "email",
+      "day_offset": 0,
+      "subject_template": [
+        "Noticed something on {{company}}'s website",
+        "{{first_name}} — quick thought on your site"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "warm_up",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "Specific, actionable observation about their SEO, GA4 setup, paid media, or CRM"
+    },
+    {
+      "sequence_id": "nudge-email-2",
+      "brand": "nudge",
+      "step_number": 2,
+      "channel": "email",
+      "day_offset": 4,
+      "subject_template": [
+        "What I'd fix first (no charge)",
+        "{{first_name}} — a quick audit finding"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "establish_credibility",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "Mini audit/recommendation — builds credibility, gives value"
+    },
+    {
+      "sequence_id": "nudge-email-3",
+      "brand": "nudge",
+      "step_number": 3,
+      "channel": "email",
+      "day_offset": 9,
+      "subject_template": [
+        "Quick proof + a direct question",
+        "Results like this for {{industry}} — worth a chat?"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "ask_for_meeting",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "Social proof + CTA — short, punchy, direct"
+    },
+    {
+      "sequence_id": "nudge-email-4",
+      "brand": "nudge",
+      "step_number": 4,
+      "channel": "email",
+      "day_offset": 16,
+      "subject_template": [
+        "Closing this one out",
+        "{{first_name}} — last one from me"
+      ],
+      "message_template": "AI_GENERATED",
+      "goal": "break_up",
+      "ab_variant": "both",
+      "active": true,
+      "notes": "Break-up + open door"
+    },
+    {
+      "sequence_id": "nudge-li-1",
+      "brand": "nudge",
+      "step_number": 1,
+      "channel": "linkedin_view",
+      "day_offset": 0,
+      "subject_template": null,
+      "message_template": null,
+      "goal": "warm_up",
+      "ab_variant": null,
+      "active": true,
+      "notes": "Profile view to warm up"
+    },
+    {
+      "sequence_id": "nudge-li-2",
+      "brand": "nudge",
+      "step_number": 2,
+      "channel": "linkedin_like",
+      "day_offset": 1,
+      "subject_template": null,
+      "message_template": null,
+      "goal": "warm_up",
+      "ab_variant": null,
+      "active": true,
+      "notes": "Like recent post"
+    },
+    {
+      "sequence_id": "nudge-li-3",
+      "brand": "nudge",
+      "step_number": 3,
+      "channel": "linkedin_connect",
+      "day_offset": 2,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "connect",
+      "ab_variant": null,
+      "active": true,
+      "notes": "Connection request with personalised note"
+    },
+    {
+      "sequence_id": "nudge-li-4",
+      "brand": "nudge",
+      "step_number": 4,
+      "channel": "linkedin_message",
+      "day_offset": 0,
+      "subject_template": null,
+      "message_template": "AI_GENERATED",
+      "goal": "warm_up",
+      "ab_variant": null,
+      "active": true,
+      "trigger": "connection_accepted",
+      "notes": "Value-first opener — specific digital observation"
+    }
+  ]
+}

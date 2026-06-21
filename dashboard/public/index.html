@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BizDev Platform</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & tokens ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2d3148;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --accent: #5b7cf6;
+      --accent-dim: #3a4f9e;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --orange: #f97316;
+      --font: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 8px;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .logo h1 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+    .logo p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-item:hover { color: var(--text); background: var(--surface2); }
+    .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(91,124,246,0.08); }
+    .nav-item .icon { width: 16px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: white;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── Main content ────────────────────────────────────────────────────── */
+    .main { overflow-y: auto; }
+    .view { display: none; padding: 32px; }
+    .view.active { display: block; }
+
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .view-subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+    /* ── Stats grid ──────────────────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+    .stat-card .value { font-size: 32px; font-weight: 700; line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .stat-card.green .value { color: var(--green); }
+    .stat-card.blue .value { color: var(--accent); }
+    .stat-card.yellow .value { color: var(--yellow); }
+    .stat-card.orange .value { color: var(--orange); }
+
+    /* ── Cards ────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+
+    /* ── Funnel ──────────────────────────────────────────────────────────── */
+    .funnel { display: flex; align-items: stretch; gap: 2px; margin-bottom: 8px; border-radius: var(--radius); overflow: hidden; }
+    .funnel-step { flex: 1; background: var(--accent-dim); padding: 12px 8px; text-align: center; font-size: 12px; transition: background 0.2s; }
+    .funnel-step:hover { background: var(--accent); }
+    .funnel-step .n { font-size: 20px; font-weight: 700; }
+    .funnel-step .l { font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── Table ───────────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+    td { padding: 12px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    /* ── Status badges ───────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-new { background: rgba(107,114,128,0.2); color: var(--muted); }
+    .badge-queued { background: rgba(91,124,246,0.2); color: var(--accent); }
+    .badge-active { background: rgba(34,197,94,0.2); color: var(--green); }
+    .badge-responded { background: rgba(234,179,8,0.2); color: var(--yellow); }
+    .badge-paused { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .badge-won { background: rgba(34,197,94,0.3); color: var(--green); }
+    .badge-meeting_booked { background: rgba(34,197,94,0.2); color: var(--green); }
+    .badge-unsubscribed, .badge-do_not_contact { background: rgba(239,68,68,0.2); color: var(--red); }
+
+    .badge-positive_interest { background: rgba(34,197,94,0.2); color: var(--green); }
+    .badge-question_objection { background: rgba(234,179,8,0.2); color: var(--yellow); }
+    .badge-not_now_nurture { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .badge-negative_hard_no { background: rgba(239,68,68,0.2); color: var(--red); }
+    .badge-out_of_office { background: rgba(107,114,128,0.2); color: var(--muted); }
+    .badge-referral_signal { background: rgba(91,124,246,0.2); color: var(--accent); }
+
+    /* ── Brand badges ────────────────────────────────────────────────────── */
+    .brand-optimai { color: #818cf8; font-weight: 600; font-size: 11px; }
+    .brand-nudge { color: #34d399; font-weight: 600; font-size: 11px; }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #4a68e0; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn-success { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+
+    .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+
+    /* ── Search/filter ───────────────────────────────────────────────────── */
+    input[type="text"], input[type="email"], select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: var(--sans);
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    select { cursor: pointer; }
+
+    .search-bar { display: flex; gap: 10px; }
+    .search-bar input { max-width: 280px; }
+
+    /* ── Prospect detail modal ───────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 700px;
+      max-width: 95vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; padding: 4px; }
+    .modal-close:hover { color: var(--text); }
+
+    /* ── Timeline ────────────────────────────────────────────────────────── */
+    .timeline { list-style: none; position: relative; }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+    .timeline-item { padding: 0 0 16px 24px; position: relative; }
+    .timeline-item::before { content: ''; position: absolute; left: 0; top: 5px; width: 15px; height: 15px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); }
+    .timeline-item.email::before { border-color: var(--accent); }
+    .timeline-item.linkedin::before { border-color: var(--green); }
+    .timeline-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .timeline-content { font-size: 13px; line-height: 1.5; color: var(--text); }
+
+    /* ── System status ───────────────────────────────────────────────────── */
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-err { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .status-unknown { background: var(--muted); }
+
+    .health-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .health-row:last-child { border-bottom: none; }
+
+    /* ── Form layout ─────────────────────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ── Loader ──────────────────────────────────────────────────────────── */
+    .loading { color: var(--muted); font-size: 13px; padding: 40px; text-align: center; }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-size: 13px;
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error { border-color: var(--red); color: var(--red); }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>BizDev Platform</h1>
+      <p>OptimAI · Nudge Digital</p>
+    </div>
+    <nav>
+      <div class="nav-item active" data-view="overview"><span class="icon">◈</span> Overview</div>
+      <div class="nav-item" data-view="prospects"><span class="icon">◎</span> Prospects</div>
+      <div class="nav-item" data-view="replies" id="nav-replies"><span class="icon">◷</span> Inbox</div>
+      <div class="nav-item" data-view="drafts"><span class="icon">✎</span> Drafts</div>
+      <div class="nav-item" data-view="sequences"><span class="icon">≡</span> Sequences</div>
+      <div class="nav-item" data-view="templates"><span class="icon">✎</span> Templates</div>
+      <div class="nav-item" data-view="reporting"><span class="icon">▸</span> Reporting</div>
+      <div class="nav-item" data-view="settings"><span class="icon">⚙</span> Settings</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+        <span class="status-dot" id="health-linkedin" title="LinkedIn"></span> LinkedIn
+        &nbsp;
+        <span class="status-dot" id="health-gmail" title="Gmail"></span> Gmail
+      </div>
+      Last run: <span id="last-run">—</span>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ── Overview ───────────────────────────────────────────────────── -->
+    <section class="view active" id="view-overview">
+      <h2>Command Centre</h2>
+      <p class="view-subtitle">Live funnel and system health</p>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card blue"><div class="label">Active</div><div class="value" id="stat-active">—</div><div class="sub">in sequences</div></div>
+        <div class="stat-card yellow"><div class="label">Replied</div><div class="value" id="stat-replied">—</div><div class="sub">awaiting action</div></div>
+        <div class="stat-card green"><div class="label">Meetings</div><div class="value" id="stat-meetings">—</div><div class="sub">booked</div></div>
+        <div class="stat-card orange"><div class="label">Sent Today</div><div class="value" id="stat-sent">—</div><div class="sub">messages</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Pipeline Funnel</h3>
+        <div class="funnel" id="funnel">
+          <div class="funnel-step"><div class="n" id="f-total">—</div><div class="l">Prospects</div></div>
+          <div class="funnel-step"><div class="n" id="f-contacted">—</div><div class="l">Contacted</div></div>
+          <div class="funnel-step"><div class="n" id="f-replied">—</div><div class="l">Replied</div></div>
+          <div class="funnel-step"><div class="n" id="f-meetings">—</div><div class="l">Meetings</div></div>
+          <div class="funnel-step"><div class="n" id="f-won">—</div><div class="l">Won</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="card">
+          <h3>Quick Actions</h3>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <button class="btn btn-primary" onclick="triggerAction('run-outreach')">▶ Run Outreach Queue</button>
+            <button class="btn btn-ghost" onclick="triggerAction('run-replies')">⟳ Check Replies</button>
+            <button class="btn btn-ghost" onclick="triggerAction('run-nurture')">⊙ Run Nurture Engine</button>
+            <button class="btn btn-ghost" onclick="triggerAction('health-check')">◈ Run Health Check</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>By Brand</h3>
+          <div class="health-row"><span class="brand-optimai">OptimAI</span><span id="brand-optimai-count" style="font-weight:700">—</span></div>
+          <div class="health-row"><span class="brand-nudge">Nudge Digital</span><span id="brand-nudge-count" style="font-weight:700">—</span></div>
+          <div class="health-row" style="margin-top:12px;"><span>Unhandled replies</span><span id="unhandled-count" style="font-weight:700;color:var(--yellow)">—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Prospects ───────────────────────────────────────────────────── -->
+    <section class="view" id="view-prospects">
+      <h2>Prospects</h2>
+      <p class="view-subtitle">All leads in the CRM</p>
+
+      <div class="action-bar">
+        <div class="search-bar">
+          <input type="text" id="prospect-search" placeholder="Search name, company, email…" oninput="filterProspects()">
+          <select id="prospect-brand" onchange="filterProspects()">
+            <option value="">All brands</option>
+            <option value="optimai">OptimAI</option>
+            <option value="nudge">Nudge Digital</option>
+          </select>
+          <select id="prospect-status" onchange="filterProspects()">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="queued">Queued</option>
+            <option value="active">Active</option>
+            <option value="responded">Responded</option>
+            <option value="meeting_booked">Meeting Booked</option>
+            <option value="won">Won</option>
+            <option value="paused">Paused</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="showAddProspect()">+ Add Prospect</button>
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap">
+          <table id="prospects-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Title</th>
+                <th>Brand</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Last Activity</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="prospects-tbody">
+              <tr><td colspan="8" class="loading">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Inbox ───────────────────────────────────────────────────────── -->
+    <section class="view" id="view-replies">
+      <h2>Reply Inbox</h2>
+      <p class="view-subtitle">Gmail + LinkedIn replies, classified by intent</p>
+      <div class="action-bar">
+        <button class="btn btn-ghost" onclick="loadReplies()">⟳ Refresh</button>
+        <button class="btn btn-ghost" onclick="triggerAction('run-replies')">⊙ Check now</button>
+      </div>
+      <div id="replies-container">
+        <div class="loading">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ── Drafts ──────────────────────────────────────────────────────── -->
+    <section class="view" id="view-drafts">
+      <h2>Message Drafts</h2>
+      <p class="view-subtitle">AI-generated messages awaiting your approval</p>
+      <div id="drafts-container">
+        <div class="loading">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ── Sequences ───────────────────────────────────────────────────── -->
+    <section class="view" id="view-sequences">
+      <h2>Sequences</h2>
+      <p class="view-subtitle">Multi-channel outreach sequences for each brand</p>
+      <div id="sequences-container">
+        <div class="loading">Loading sequence config…</div>
+      </div>
+    </section>
+
+    <!-- ── Reporting ───────────────────────────────────────────────────── -->
+    <section class="view" id="view-reporting">
+      <h2>Reporting</h2>
+      <p class="view-subtitle">Performance metrics and funnel analysis</p>
+      <div id="reporting-container">
+        <div class="stats-grid" id="report-stats-grid"></div>
+        <div class="card"><canvas id="funnel-chart" height="120"></canvas></div>
+        <div class="card" id="top-subjects"></div>
+      </div>
+    </section>
+
+    <!-- ── Settings ────────────────────────────────────────────────────── -->
+    <section class="view" id="view-settings">
+      <h2>Settings</h2>
+      <p class="view-subtitle">System configuration and feature flags</p>
+      <div id="settings-container">
+        <div class="loading">Loading…</div>
+      </div>
+    </section>
+
+
+    <!-- ── Templates ───────────────────────────────────────────────────── -->
+    <section class="view" id="view-templates">
+      <h2>Template Editor</h2>
+      <p class="view-subtitle">Edit all outreach copy directly. Changes take effect immediately — no restart needed.</p>
+
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <select id="tpl-brand" onchange="loadTemplateEditor()" style="width:auto">
+          <option value="optimai">OptimAI</option>
+          <option value="nudge">Nudge Digital</option>
+        </select>
+        <select id="tpl-type" onchange="renderTemplateSection()" style="width:auto">
+          <option value="email_sequences">Email Sequences</option>
+          <option value="linkedin_connect">LinkedIn Connect Note</option>
+          <option value="linkedin_messages">LinkedIn Messages</option>
+          <option value="nurture_emails">Nurture Emails</option>
+          <option value="reply_templates">Reply Templates</option>
+        </select>
+      </div>
+
+      <div id="template-editor-container">
+        <div class="loading">Loading templates…</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Prospect detail modal -->
+<div class="modal-overlay" id="prospect-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-name">—</h2>
+        <p id="modal-sub" style="color:var(--muted);font-size:13px;margin-top:4px;"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let allProspects = [];
+let repliesBadge = 0;
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    item.classList.add('active');
+    const view = item.dataset.view;
+    document.getElementById(`view-${view}`).classList.add('active');
+    // Lazy load
+    if (view === 'prospects') loadProspects();
+    if (view === 'replies') loadReplies();
+    if (view === 'drafts') loadDrafts();
+    if (view === 'reporting') loadReporting();
+    if (view === 'settings') loadSettings();
+    if (view === 'sequences') loadSequences();
+    if (view === 'templates') loadTemplateEditor();
+  });
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`/api${path}`, opts);
+  if (!r.ok) throw new Error(`API error ${r.status}`);
+  return r.json();
+}
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const data = await api('/overview');
+    document.getElementById('stat-active').textContent = data.funnel.contacted;
+    document.getElementById('stat-replied').textContent = data.funnel.replied;
+    document.getElementById('stat-meetings').textContent = data.funnel.meetings;
+    document.getElementById('stat-sent').textContent = data.todayMessages;
+    document.getElementById('f-total').textContent = data.funnel.total;
+    document.getElementById('f-contacted').textContent = data.funnel.contacted;
+    document.getElementById('f-replied').textContent = data.funnel.replied;
+    document.getElementById('f-meetings').textContent = data.funnel.meetings;
+    document.getElementById('f-won').textContent = data.funnel.won;
+    document.getElementById('brand-optimai-count').textContent = data.byBrand.optimai;
+    document.getElementById('brand-nudge-count').textContent = data.byBrand.nudge;
+    document.getElementById('unhandled-count').textContent = data.unhandledReplies;
+
+    if (data.unhandledReplies > 0) {
+      document.getElementById('nav-replies').innerHTML =
+        `<span class="icon">◷</span> Inbox <span class="nav-badge">${data.unhandledReplies}</span>`;
+    }
+  } catch (err) {
+    console.error('Overview load failed:', err);
+  }
+}
+
+// ── Prospects ─────────────────────────────────────────────────────────────────
+async function loadProspects() {
+  document.getElementById('prospects-tbody').innerHTML = '<tr><td colspan="8" class="loading">Loading…</td></tr>';
+  try {
+    allProspects = await api('/prospects');
+    renderProspects(allProspects);
+  } catch (err) {
+    document.getElementById('prospects-tbody').innerHTML = `<tr><td colspan="8" class="loading" style="color:var(--red)">Error: ${err.message}</td></tr>`;
+  }
+}
+
+function renderProspects(prospects) {
+  const tbody = document.getElementById('prospects-tbody');
+  if (!prospects.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="loading">No prospects found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = prospects.map(p => `
+    <tr>
+      <td><strong>${p.first_name} ${p.last_name}</strong></td>
+      <td>${p.company || '—'}</td>
+      <td style="color:var(--muted)">${p.title || '—'}</td>
+      <td><span class="brand-${p.brand}">${p.brand === 'optimai' ? 'OptimAI' : 'Nudge'}</span></td>
+      <td>${p.icp_score ? `<strong>${p.icp_score}</strong>/100` : '—'}</td>
+      <td><span class="badge badge-${p.status}">${p.status?.replace(/_/g,' ') || '—'}</span></td>
+      <td style="color:var(--muted);font-size:12px">${formatDate(p.last_activity)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="showProspect('${p.id}')">View</button>
+        <select style="width:auto;padding:4px 8px;font-size:11px;margin-left:4px" onchange="updateStatus('${p.id}', this.value)">
+          <option value="">Change status…</option>
+          <option value="queued">Queued</option>
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="responded">Responded</option>
+          <option value="meeting_booked">Meeting Booked</option>
+          <option value="won">Won</option>
+          <option value="do_not_contact">DNC</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterProspects() {
+  const q = document.getElementById('prospect-search').value.toLowerCase();
+  const brand = document.getElementById('prospect-brand').value;
+  const status = document.getElementById('prospect-status').value;
+  const filtered = allProspects.filter(p => {
+    const matchQ = !q || `${p.first_name} ${p.last_name} ${p.company} ${p.email}`.toLowerCase().includes(q);
+    const matchBrand = !brand || p.brand === brand;
+    const matchStatus = !status || p.status === status;
+    return matchQ && matchBrand && matchStatus;
+  });
+  renderProspects(filtered);
+}
+
+async function updateStatus(id, status) {
+  if (!status) return;
+  try {
+    await api(`/prospects/${id}`, 'PATCH', { status });
+    toast(`Status updated to ${status}`);
+    loadProspects();
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'error');
+  }
+}
+
+async function showProspect(id) {
+  try {
+    const data = await api(`/prospects/${id}`);
+    document.getElementById('modal-name').textContent = `${data.first_name} ${data.last_name}`;
+    document.getElementById('modal-sub').textContent = `${data.title} at ${data.company} · ${data.location || ''}`;
+    document.getElementById('modal-content').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;font-size:13px;">
+        <div><span style="color:var(--muted)">Brand</span><br><strong class="brand-${data.brand}">${data.brand}</strong></div>
+        <div><span style="color:var(--muted)">ICP Score</span><br><strong>${data.icp_score || '—'}/100</strong></div>
+        <div><span style="color:var(--muted)">Status</span><br><span class="badge badge-${data.status}">${data.status}</span></div>
+        <div><span style="color:var(--muted)">Email</span><br>${data.email || '—'}</div>
+        <div><span style="color:var(--muted)">Source</span><br>${data.source || '—'}</div>
+        <div><span style="color:var(--muted)">Tech Stack</span><br style="font-size:11px">${data.tech_stack || '—'}</div>
+      </div>
+      ${data.notes ? `<div style="background:var(--surface2);border-radius:6px;padding:12px;font-size:12px;color:var(--muted);margin-bottom:20px">${data.notes}</div>` : ''}
+      <h3 style="margin-bottom:12px;font-size:14px">Timeline (${data.messages?.length || 0} touchpoints)</h3>
+      <ul class="timeline">
+        ${(data.messages || []).map(m => `
+          <li class="timeline-item ${m.channel}">
+            <div class="timeline-label">${formatDate(m.sent_at)} · ${m.channel} · Step ${m.step} · <span class="badge badge-${m.status}">${m.status}</span></div>
+            <div class="timeline-content">${m.subject ? `<strong>${m.subject}</strong><br>` : ''}${(m.body || '').substring(0, 200)}${m.body?.length > 200 ? '…' : ''}</div>
+          </li>
+        `).join('')}
+        ${!data.messages?.length ? '<li class="timeline-item"><div class="timeline-content" style="color:var(--muted)">No messages sent yet.</div></li>' : ''}
+      </ul>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        ${data.linkedin_url ? `<a href="${data.linkedin_url}" target="_blank" class="btn btn-ghost btn-sm">↗ LinkedIn</a>` : ''}
+        ${data.website ? `<a href="${data.website}" target="_blank" class="btn btn-ghost btn-sm">↗ Website</a>` : ''}
+      </div>
+    `;
+    document.getElementById('prospect-modal').classList.add('open');
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'error');
+  }
+}
+
+function closeModal() { document.getElementById('prospect-modal').classList.remove('open'); }
+document.getElementById('prospect-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Replies ───────────────────────────────────────────────────────────────────
+async function loadReplies() {
+  document.getElementById('replies-container').innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const replies = await api('/replies');
+    if (!replies.length) {
+      document.getElementById('replies-container').innerHTML = '<div class="card" style="text-align:center;color:var(--muted)">No unhandled replies. ✓</div>';
+      return;
+    }
+    document.getElementById('replies-container').innerHTML = replies.map(r => `
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div>
+            <strong>${r.prospect?.first_name || '?'} ${r.prospect?.last_name || ''}</strong>
+            <span style="color:var(--muted);margin:0 8px">·</span>
+            <span style="color:var(--muted);font-size:12px">${r.prospect?.company || '?'}</span>
+            <span style="color:var(--muted);margin:0 8px">·</span>
+            <span style="font-size:11px">${r.channel}</span>
+          </div>
+          <span class="badge badge-${r.intent}">${r.intent?.replace(/_/g,' ') || '?'}</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap;margin-bottom:12px">${r.content || '—'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">→ ${r.action_required || '—'}</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-sm" onclick="handleReply('${r.reply_id}')">✓ Mark handled</button>
+          ${r.prospect?.id ? `<button class="btn btn-ghost btn-sm" onclick="showProspect('${r.prospect.id}')">View prospect</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    document.getElementById('replies-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
+  }
+}
+
+async function handleReply(id) {
+  try {
+    await api(`/replies/${id}/handle`, 'POST');
+    toast('Marked as handled');
+    loadReplies();
+    loadOverview();
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'error');
+  }
+}
+
+// ── Drafts ────────────────────────────────────────────────────────────────────
+async function loadDrafts() {
+  document.getElementById('drafts-container').innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const drafts = await api('/drafts');
+    if (!drafts.length) {
+      document.getElementById('drafts-container').innerHTML = '<div class="card" style="text-align:center;color:var(--muted)">No pending drafts.</div>';
+      return;
+    }
+    document.getElementById('drafts-container').innerHTML = drafts.map(d => `
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <strong>${d.prospect?.first_name || '?'} ${d.prospect?.last_name || ''}</strong>
+            <span style="color:var(--muted);margin:0 8px">·</span>
+            <span style="color:var(--muted);font-size:12px">${d.prospect?.company || '?'}</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:11px;color:var(--muted)">${d.channel} · Step ${d.step}</span>
+            <span class="badge badge-queued">Draft</span>
+          </div>
+        </div>
+        ${d.subject ? `<div style="font-size:13px;font-weight:600;margin-bottom:8px">${d.subject}</div>` : ''}
+        <div style="background:var(--surface2);border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap;margin-bottom:12px;max-height:200px;overflow-y:auto">${d.body || '—'}</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-sm" onclick="approveDraft('${d.message_id}')">✓ Send</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectDraft('${d.message_id}')">✕ Reject</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    document.getElementById('drafts-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
+  }
+}
+
+async function approveDraft(id) {
+  try {
+    const r = await api(`/drafts/${id}/approve`, 'POST');
+    if (r.success) { toast('Message sent!'); loadDrafts(); }
+    else toast(r.error || 'Send failed', 'error');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function rejectDraft(id) {
+  try {
+    await api(`/drafts/${id}`, 'DELETE');
+    toast('Draft rejected');
+    loadDrafts();
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+// ── Sequences ─────────────────────────────────────────────────────────────────
+async function loadSequences() {
+  const seqs = await fetch('/config/sequences.json').then(r => r.json()).catch(() => null);
+  if (!seqs) { document.getElementById('sequences-container').innerHTML = '<div class="loading" style="color:var(--red)">Could not load sequences.</div>'; return; }
+  const brands = Object.keys(seqs);
+  document.getElementById('sequences-container').innerHTML = brands.map(brand => `
+    <div class="card">
+      <h3 class="brand-${brand}">${brand === 'optimai' ? 'OptimAI' : 'Nudge Digital'} Sequence</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Channel</th><th>Day</th><th>Goal</th><th>Notes</th></tr></thead>
+          <tbody>
+            ${seqs[brand].map(s => `
+              <tr>
+                <td>${s.step_number}</td>
+                <td><span class="badge badge-${s.channel.startsWith('linkedin') ? 'active' : 'queued'}">${s.channel}</span></td>
+                <td>+${s.day_offset}d</td>
+                <td>${s.goal?.replace(/_/g,' ') || '—'}</td>
+                <td style="color:var(--muted);font-size:12px">${s.notes || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Reporting ─────────────────────────────────────────────────────────────────
+async function loadReporting() {
+  try {
+    const data = await api('/reporting');
+    document.getElementById('report-stats-grid').innerHTML = `
+      <div class="stat-card blue"><div class="label">Total Sent</div><div class="value">${data.totalSent}</div></div>
+      <div class="stat-card yellow"><div class="label">Total Replied</div><div class="value">${data.totalReplied}</div></div>
+      <div class="stat-card green"><div class="label">Reply Rate</div><div class="value">${data.replyRate}%</div></div>
+    `;
+
+    // Top subjects
+    const topSubjectsHtml = data.topSubjects?.length ? `
+      <h3 style="margin-bottom:12px">Top Performing Subject Lines</h3>
+      <table><thead><tr><th>Subject</th><th>Sent</th><th>Replied</th><th>Rate</th></tr></thead>
+      <tbody>${data.topSubjects.map(s => `<tr><td>${s.subject}</td><td>${s.sent}</td><td>${s.replied}</td><td>${(s.rate*100).toFixed(1)}%</td></tr>`).join('')}</tbody>
+      </table>
+    ` : '<p style="color:var(--muted)">No data yet.</p>';
+    document.getElementById('top-subjects').innerHTML = topSubjectsHtml;
+
+    // Funnel chart
+    const ctx = document.getElementById('funnel-chart').getContext('2d');
+    const statuses = Object.keys(data.statusCounts || {});
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: statuses.map(s => s.replace(/_/g,' ')),
+        datasets: [{ label: 'Prospects', data: statuses.map(s => data.statusCounts[s]), backgroundColor: '#5b7cf6' }]
+      },
+      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#2d3148' } }, y: { grid: { color: '#2d3148' } } } }
+    });
+  } catch (err) {
+    document.getElementById('reporting-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
+  }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const settings = await api('/settings');
+    const keys = [
+      ['MANUAL_APPROVAL_MODE', 'Manual approval mode (true/false)'],
+      ['AUTO_SEND_EMAIL', 'Auto-send emails (true/false)'],
+      ['AUTO_RESPOND_POSITIVE', 'Auto-respond to positive replies (true/false)'],
+      ['CALENDLY_URL', 'Calendly booking URL'],
+      ['OPTIMAI_DAILY_LIMIT', 'OptimAI daily email limit'],
+      ['NUDGE_DAILY_LIMIT', 'Nudge daily email limit'],
+      ['CASE_STUDIES', 'Recent case studies / wins (for nurture emails)'],
+    ];
+    document.getElementById('settings-container').innerHTML = `
+      <div class="card">
+        <h3>System Settings</h3>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${keys.map(([k, label]) => `
+            <div class="health-row" style="align-items:flex-start;flex-direction:column;gap:6px">
+              <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">${label}</label>
+              <div style="display:flex;gap:8px;width:100%">
+                <input type="text" value="${settings[k] || ''}" id="setting-${k}" style="flex:1">
+                <button class="btn btn-ghost btn-sm" onclick="saveSetting('${k}')">Save</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    document.getElementById('settings-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
+  }
+}
+
+async function saveSetting(key) {
+  const value = document.getElementById(`setting-${key}`)?.value;
+  try {
+    await api('/settings', 'POST', { key, value });
+    toast('Setting saved');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+// ── Quick actions ─────────────────────────────────────────────────────────────
+async function triggerAction(action) {
+  try {
+    toast(`Starting ${action.replace(/-/g,' ')}…`);
+    const r = await api(`/actions/${action}`, 'POST', {});
+    toast(r.message || 'Done');
+    setTimeout(loadOverview, 2000);
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+// ── Add prospect form ─────────────────────────────────────────────────────────
+function showAddProspect() {
+  document.getElementById('modal-name').textContent = 'Add Prospect';
+  document.getElementById('modal-sub').textContent = 'Manually add a prospect to the CRM';
+  document.getElementById('modal-content').innerHTML = `
+    <div class="form-grid">
+      <div class="form-group"><label>First Name</label><input type="text" id="np-fn"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="np-ln"></div>
+      <div class="form-group"><label>Title</label><input type="text" id="np-title"></div>
+      <div class="form-group"><label>Company</label><input type="text" id="np-company"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="np-email"></div>
+      <div class="form-group"><label>LinkedIn URL</label><input type="text" id="np-li"></div>
+      <div class="form-group"><label>Website</label><input type="text" id="np-web"></div>
+      <div class="form-group"><label>Location</label><input type="text" id="np-loc"></div>
+      <div class="form-group"><label>Industry</label><input type="text" id="np-industry"></div>
+      <div class="form-group"><label>Company Size</label><input type="text" id="np-size"></div>
+      <div class="form-group full"><label>Brand</label>
+        <select id="np-brand"><option value="optimai">OptimAI</option><option value="nudge">Nudge Digital</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" onclick="submitProspect()">Add to CRM</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  `;
+  document.getElementById('prospect-modal').classList.add('open');
+}
+
+async function submitProspect() {
+  const data = {
+    first_name: document.getElementById('np-fn').value,
+    last_name: document.getElementById('np-ln').value,
+    title: document.getElementById('np-title').value,
+    company: document.getElementById('np-company').value,
+    email: document.getElementById('np-email').value,
+    linkedin_url: document.getElementById('np-li').value,
+    website: document.getElementById('np-web').value,
+    location: document.getElementById('np-loc').value,
+    industry: document.getElementById('np-industry').value,
+    company_size: document.getElementById('np-size').value,
+    brand: document.getElementById('np-brand').value
+  };
+  try {
+    await api('/prospects', 'POST', data);
+    toast('Prospect added!');
+    closeModal();
+    loadProspects();
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const diff = (Date.now() - d) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return d.toLocaleDateString('en-AU', { day:'numeric', month:'short' });
+}
+
+
+// ── Template Editor ───────────────────────────────────────────────────────────
+let allTemplates = {};
+
+async function loadTemplateEditor() {
+  try {
+    allTemplates = await api('/templates');
+    renderTemplateSection();
+  } catch (err) {
+    document.getElementById('template-editor-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`;
+  }
+}
+
+function renderTemplateSection() {
+  const brand = document.getElementById('tpl-brand').value;
+  const type = document.getElementById('tpl-type').value;
+  const brandData = allTemplates[brand];
+  if (!brandData) return;
+
+  const container = document.getElementById('template-editor-container');
+
+  if (type === 'email_sequences') {
+    const steps = brandData.email_sequences || [];
+    container.innerHTML = steps.map((step, idx) => `
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">Step ${step.step_number} — ${step.goal?.replace(/_/g,' ')} <span style="color:var(--muted);font-weight:400;font-size:12px">(day +${step.day_offset})</span></h3>
+          <span class="badge badge-${step.active ? 'active' : 'paused'}">${step.active ? 'active' : 'paused'}</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Subject A</label>
+          <input type="text" id="tpl-${brand}-email-${idx}-subA" value="${escHtml(Array.isArray(step.subject) ? step.subject[0] : step.subject)}">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Subject B <span style="color:var(--muted);font-weight:400">(A/B variant)</span></label>
+          <input type="text" id="tpl-${brand}-email-${idx}-subB" value="${escHtml(Array.isArray(step.subject) && step.subject[1] ? step.subject[1] : '')}">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Body <span style="color:var(--muted);font-weight:400">— use {{first_name}}, {{company}}, {{industry}}, {{calendly_url}}</span></label>
+          <textarea id="tpl-${brand}-email-${idx}-body" rows="10" style="font-family:monospace;font-size:12px;resize:vertical">${escHtml(step.body)}</textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary btn-sm" onclick="saveEmailTemplate('${brand}', ${idx})">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="previewEmailTemplate('${brand}', ${idx})">Preview</button>
+        </div>
+        <div id="tpl-preview-${brand}-email-${idx}" style="display:none;margin-top:12px;background:var(--surface2);border-radius:6px;padding:16px;font-size:13px;white-space:pre-wrap;font-family:monospace"></div>
+      </div>
+    `).join('');
+
+  } else if (type === 'linkedin_connect') {
+    const note = brandData.linkedin_connect_note || '';
+    container.innerHTML = `
+      <div class="card">
+        <h3>Connection Request Note</h3>
+        <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Hard limit: 300 characters. Sent with every connection request.</p>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Note <span style="color:var(--muted);font-weight:400">— use {{first_name}}, {{company}}, {{industry}}</span></label>
+          <textarea id="tpl-${brand}-li-connect" rows="4" maxlength="300" style="resize:vertical">${escHtml(note)}</textarea>
+          <div style="color:var(--muted);font-size:11px;margin-top:4px" id="li-char-count">${note.length}/300 chars</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveLiConnectTemplate('${brand}')">Save</button>
+      </div>
+    `;
+    document.getElementById('tpl-'+brand+'-li-connect')?.addEventListener('input', function() {
+      document.getElementById('li-char-count').textContent = this.value.length + '/300 chars';
+    });
+
+  } else if (type === 'linkedin_messages') {
+    const msgs = brandData.linkedin_messages || [];
+    container.innerHTML = msgs.length ? msgs.map((msg, idx) => `
+      <div class="card" style="margin-bottom:20px">
+        <h3>LI Message — Step ${msg.step_number} <span style="color:var(--muted);font-weight:400;font-size:12px">(${msg.trigger || 'post_connection'}, day +${msg.day_offset})</span></h3>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Message body</label>
+          <textarea id="tpl-${brand}-li-msg-${idx}" rows="8" style="resize:vertical">${escHtml(msg.body)}</textarea>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveLiMsgTemplate('${brand}', ${idx})">Save</button>
+      </div>
+    `).join('') : '<div class="card" style="color:var(--muted)">No LinkedIn message templates for this brand yet.</div>';
+
+  } else if (type === 'nurture_emails') {
+    const nurture = brandData.nurture_emails || {};
+    const tracks = [
+      { key: 'not_now', label: 'Track A — Not Now (bi-monthly insight email)' },
+      { key: 'warm', label: 'Track B — Warm (monthly value email)' },
+      { key: 'reactivation', label: 'Quarterly Re-engagement' },
+      { key: 'breakup', label: 'Track C — Break-up Email' }
+    ];
+    container.innerHTML = tracks.map(({ key, label }) => {
+      const t = nurture[key] || { subject: '', body: '' };
+      return `
+        <div class="card" style="margin-bottom:20px">
+          <h3>${label}</h3>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Subject</label>
+            <input type="text" id="tpl-${brand}-nurture-${key}-sub" value="${escHtml(t.subject)}">
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Body</label>
+            <textarea id="tpl-${brand}-nurture-${key}-body" rows="10" style="resize:vertical;font-size:12px;font-family:monospace">${escHtml(t.body)}</textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveNurtureTemplate('${brand}', '${key}')">Save</button>
+        </div>
+      `;
+    }).join('');
+
+  } else if (type === 'reply_templates') {
+    const replies = brandData.reply_templates || {};
+    const replyTypes = [
+      { key: 'positive_booking', label: 'Positive Reply — Calendly Booking' },
+      { key: 'question_generic', label: 'Question / Objection Response' }
+    ];
+    container.innerHTML = replyTypes.map(({ key, label }) => {
+      const body = replies[key] || '';
+      return `
+        <div class="card" style="margin-bottom:20px">
+          <h3>${label}</h3>
+          <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Used as a starting point — always review before sending.</p>
+          <div class="form-group" style="margin-bottom:12px">
+            <textarea id="tpl-${brand}-reply-${key}" rows="8" style="resize:vertical;font-size:12px;font-family:monospace">${escHtml(body)}</textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveReplyTemplate('${brand}', '${key}')">Save</button>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// ── Save functions ─────────────────────────────────────────────────────────────
+
+async function saveEmailTemplate(brand, idx) {
+  const subA = document.getElementById(`tpl-${brand}-email-${idx}-subA`)?.value;
+  const subB = document.getElementById(`tpl-${brand}-email-${idx}-subB`)?.value;
+  const body = document.getElementById(`tpl-${brand}-email-${idx}-body`)?.value;
+  try {
+    await api('/templates', 'PATCH', { path: `${brand}.email_sequences.${idx}.subject`, value: subB ? [subA, subB] : [subA] });
+    await api('/templates', 'PATCH', { path: `${brand}.email_sequences.${idx}.body`, value: body });
+    toast('Template saved');
+    allTemplates[brand].email_sequences[idx].subject = subB ? [subA, subB] : [subA];
+    allTemplates[brand].email_sequences[idx].body = body;
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function saveLiConnectTemplate(brand) {
+  const note = document.getElementById(`tpl-${brand}-li-connect`)?.value;
+  try {
+    await api('/templates', 'PATCH', { path: `${brand}.linkedin_connect_note`, value: note });
+    toast('Connection note saved');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function saveLiMsgTemplate(brand, idx) {
+  const body = document.getElementById(`tpl-${brand}-li-msg-${idx}`)?.value;
+  try {
+    await api('/templates', 'PATCH', { path: `${brand}.linkedin_messages.${idx}.body`, value: body });
+    toast('LinkedIn message saved');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function saveNurtureTemplate(brand, key) {
+  const sub = document.getElementById(`tpl-${brand}-nurture-${key}-sub`)?.value;
+  const body = document.getElementById(`tpl-${brand}-nurture-${key}-body`)?.value;
+  try {
+    await api('/templates', 'PATCH', { path: `${brand}.nurture_emails.${key}.subject`, value: sub });
+    await api('/templates', 'PATCH', { path: `${brand}.nurture_emails.${key}.body`, value: body });
+    toast('Nurture template saved');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function saveReplyTemplate(brand, key) {
+  const body = document.getElementById(`tpl-${brand}-reply-${key}`)?.value;
+  try {
+    await api('/templates', 'PATCH', { path: `${brand}.reply_templates.${key}`, value: body });
+    toast('Reply template saved');
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────────
+async function previewEmailTemplate(brand, idx) {
+  const body = document.getElementById(`tpl-${brand}-email-${idx}-body`)?.value || '';
+  const subA = document.getElementById(`tpl-${brand}-email-${idx}-subA`)?.value || '';
+  const previewEl = document.getElementById(`tpl-preview-${brand}-email-${idx}`);
+  if (!previewEl) return;
+
+  // Client-side render with sample data
+  const sample = { first_name: 'Alex', last_name: 'Chen', company: 'Acme Co', title: 'CEO', industry: 'SaaS', location: 'Melbourne', website: 'acme.com', sender_name: 'Harrison', sender_company: brand === 'optimai' ? 'OptimAI' : 'Nudge Digital', sender_website: brand === 'optimai' ? 'optimai.com.au' : 'nudgedigital.com.au', calendly_url: 'calendly.com/your-link' };
+  const rendered = Object.entries(sample).reduce((t, [k, v]) => t.replace(new RegExp('\{\{'+k+'\}\}', 'g'), v), body);
+  const renderedSub = Object.entries(sample).reduce((t, [k, v]) => t.replace(new RegExp('\{\{'+k+'\}\}', 'g'), v), subA);
+
+  previewEl.style.display = 'block';
+  previewEl.innerHTML = `<strong style="color:var(--muted);font-size:11px">SUBJECT:</strong> ${escHtml(renderedSub)}
+
+<strong style="color:var(--muted);font-size:11px">BODY:</strong>
+${escHtml(rendered)}`;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadOverview();
+setInterval(loadOverview, 60000); // Refresh overview every minute
+</script>
+</body>
+</html>

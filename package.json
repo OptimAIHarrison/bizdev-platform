@@ -1,0 +1,36 @@
+{
+  "name": "bizdev-outreach-platform",
+  "version": "1.0.0",
+  "description": "AI-powered business development and outreach platform for OptimAI and Nudge Digital",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "setup": "node setup.js",
+    "dev": "nodemon server.js",
+    "prospect": "node modules/prospecting/index.js",
+    "outreach": "node modules/outreach/index.js",
+    "replies": "node modules/replies/index.js",
+    "nurture": "node modules/nurture/index.js",
+    "health": "node modules/health-check.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "googleapis": "^140.0.0",
+    "playwright": "^1.44.0",
+    "express": "^4.19.0",
+    "axios": "^1.7.0",
+    "resend": "^3.2.0",
+    "dotenv": "^16.4.0",
+    "cheerio": "^1.0.0",
+    "node-cron": "^3.0.0",
+    "uuid": "^10.0.0",
+    "dayjs": "^1.11.0",
+    "chart.js": "^4.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

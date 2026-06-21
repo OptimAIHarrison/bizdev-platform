@@ -1,0 +1,221 @@
+{
+  "_readme": "Templates use {{variable}} syntax. Available variables: {{first_name}}, {{last_name}}, {{company}}, {{title}}, {{industry}}, {{location}}, {{website}}, {{sender_name}}, {{sender_company}}, {{sender_website}}, {{calendly_url}}. Subject A/B variants are the two items in the subject array.",
+
+  "optimai": {
+    "brand_name": "OptimAI",
+    "sender_name": "Harrison",
+    "sender_company": "OptimAI",
+    "sender_website": "optimai.com.au",
+    "signature": "Harrison\nOptimAI — optimai.com.au",
+    "opt_out_line": "reply STOP to opt out",
+
+    "email_sequences": [
+      {
+        "sequence_id": "optimai-email-1",
+        "step_number": 1,
+        "day_offset": 0,
+        "goal": "warm_up",
+        "active": true,
+        "subject": [
+          "Quick thought on {{company}}'s operations",
+          "{{first_name}} — noticed something about {{company}}"
+        ],
+        "body": "Hi {{first_name}},\n\nI've been looking at a few {{industry}} businesses lately and noticed a pattern — companies at {{company}}'s stage often hit a wall where hiring more people feels like the only option, but the real issue is process.\n\nNot sure if that resonates with what you're seeing, but thought it was worth a mention.\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      },
+      {
+        "sequence_id": "optimai-email-2",
+        "step_number": 2,
+        "day_offset": 3,
+        "goal": "establish_credibility",
+        "active": true,
+        "subject": [
+          "How we helped a similar {{industry}} business",
+          "{{first_name}} — a quick before/after"
+        ],
+        "body": "Hi {{first_name}},\n\nFollowing up from my last email.\n\nRecently worked with a {{industry}} business similar in size to {{company}}. They were spending ~15 hours a week on manual reporting and client onboarding. We automated both — now it takes under an hour.\n\nNot a plug, just context for what's possible without adding headcount.\n\nWorth a quick chat?\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      },
+      {
+        "sequence_id": "optimai-email-3",
+        "step_number": 3,
+        "day_offset": 7,
+        "goal": "ask_for_meeting",
+        "active": true,
+        "subject": [
+          "Still worth 15 mins?",
+          "{{first_name}} — one quick question"
+        ],
+        "body": "Hi {{first_name}},\n\nLast one from me on this.\n\nIf there's any part of {{company}}'s operations that feels slower or more manual than it should be — I'd love 15 minutes to see if there's a quick fix.\n\nNo prep needed. Book here: {{calendly_url}}\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      },
+      {
+        "sequence_id": "optimai-email-4",
+        "step_number": 4,
+        "day_offset": 14,
+        "goal": "break_up",
+        "active": true,
+        "subject": [
+          "Closing your file",
+          "Moving on (but leaving the door open)"
+        ],
+        "body": "Hi {{first_name}},\n\nI'll stop reaching out after this — clearly the timing isn't right.\n\nIf anything changes and you want to explore what's possible with AI and automation at {{company}}, you know where to find me.\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      }
+    ],
+
+    "linkedin_connect_note": "Hi {{first_name}}, came across your profile — interesting work at {{company}}. Would love to connect.",
+
+    "linkedin_messages": [
+      {
+        "sequence_id": "optimai-li-msg-1",
+        "step_number": 4,
+        "day_offset": 0,
+        "goal": "warm_up",
+        "trigger": "connection_accepted",
+        "body": "Hey {{first_name}}, thanks for connecting.\n\nI work with {{industry}} businesses on AI and automation — not a pitch, just context. Happy to share what's working if it's ever useful.\n\nHarrison"
+      },
+      {
+        "sequence_id": "optimai-li-msg-2",
+        "step_number": 5,
+        "day_offset": 6,
+        "goal": "establish_credibility",
+        "trigger": "post_connection",
+        "body": "Hey {{first_name}},\n\nQuick one — I've been looking at how {{industry}} businesses handle [process area]. Most are doing it manually when there's a much faster way.\n\nHappy to share what we've built if that's relevant to {{company}} at all."
+      },
+      {
+        "sequence_id": "optimai-li-msg-3",
+        "step_number": 6,
+        "day_offset": 13,
+        "goal": "establish_credibility",
+        "trigger": "post_connection",
+        "body": "{{first_name}} — shared a case study recently that might be relevant.\n\nA {{industry}} business cut their ops overhead by ~60% in 6 weeks. Happy to walk you through it on a call if you're curious."
+      },
+      {
+        "sequence_id": "optimai-li-msg-4",
+        "step_number": 7,
+        "day_offset": 23,
+        "goal": "ask_for_meeting",
+        "trigger": "post_connection",
+        "body": "Hey {{first_name}}, last nudge from me.\n\nIf there's any part of {{company}}'s operations you'd want to automate, I'd love 15 mins. Book here: {{calendly_url}}\n\nIf not, no worries — I'll leave you to it."
+      }
+    ],
+
+    "nurture_emails": {
+      "not_now": {
+        "subject": "Something you might find useful — {{company}}",
+        "body": "Hi {{first_name}},\n\nChecking in. No pitch — just came across something I thought might be relevant to {{company}}.\n\n[INSERT RELEVANT INSIGHT OR RESOURCE HERE]\n\nHope things are going well.\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      },
+      "warm": {
+        "subject": "Quick resource for {{first_name}}",
+        "body": "Hi {{first_name}},\n\nSent this to a few people in {{industry}} lately and it seemed to land well — thought you might find it useful too.\n\n[INSERT RESOURCE OR TIP HERE]\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      },
+      "reactivation": {
+        "subject": "Checking back in — {{company}}",
+        "body": "Hi {{first_name}},\n\nChecking back in — has anything changed on your end since we last spoke?\n\nHappy to have a quick chat if the timing's better now: {{calendly_url}}\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      },
+      "breakup": {
+        "subject": "Closing this one out",
+        "body": "Hi {{first_name}},\n\nI've reached out a few times without hearing back — I'll assume the timing isn't right and won't message again.\n\nIf things change, feel free to reach out directly.\n\nHarrison\nOptimAI — optimai.com.au\n\nreply STOP to opt out"
+      }
+    },
+
+    "reply_templates": {
+      "positive_booking": "Hi {{first_name}},\n\nGreat to hear — let's find a time.\n\nBook here: {{calendly_url}}\n\nHarrison",
+      "question_generic": "Hi {{first_name}},\n\nGood question — [ANSWER HERE]\n\nHappy to go deeper on a call if that's useful: {{calendly_url}}\n\nHarrison"
+    }
+  },
+
+  "nudge": {
+    "brand_name": "Nudge Digital",
+    "sender_name": "Harrison",
+    "sender_company": "Nudge Digital",
+    "sender_website": "nudgedigital.com.au",
+    "signature": "Harrison\nNudge Digital — nudgedigital.com.au",
+    "opt_out_line": "reply STOP to opt out",
+
+    "email_sequences": [
+      {
+        "sequence_id": "nudge-email-1",
+        "step_number": 1,
+        "day_offset": 0,
+        "goal": "warm_up",
+        "active": true,
+        "subject": [
+          "Noticed something on {{company}}'s website",
+          "{{first_name}} — quick thought on your site"
+        ],
+        "body": "Hi {{first_name}},\n\nI was looking at {{company}}'s website — [SPECIFIC OBSERVATION ABOUT THEIR SITE, SEO, ADS OR ANALYTICS SETUP].\n\nIt's a quick fix that tends to have a noticeable impact. Happy to flag it either way.\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      },
+      {
+        "sequence_id": "nudge-email-2",
+        "step_number": 2,
+        "day_offset": 4,
+        "goal": "establish_credibility",
+        "active": true,
+        "subject": [
+          "What I'd fix first (no charge)",
+          "{{first_name}} — a quick audit finding"
+        ],
+        "body": "Hi {{first_name}},\n\nFollowing up — took a closer look at {{company}}'s setup.\n\n[SPECIFIC AUDIT FINDING — e.g. 'Your GA4 is firing duplicate purchase events, which means your ROAS data is probably wrong.' or 'Your top landing page has a Core Web Vitals issue that's likely hurting your paid traffic quality score.']\n\nHappy to walk through how to fix it. No cost, no obligation.\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      },
+      {
+        "sequence_id": "nudge-email-3",
+        "step_number": 3,
+        "day_offset": 9,
+        "goal": "ask_for_meeting",
+        "active": true,
+        "subject": [
+          "Results like this for {{industry}} — worth a chat?",
+          "Quick proof + a direct question"
+        ],
+        "body": "Hi {{first_name}},\n\nWorked with a {{industry}} business recently — [BRIEF RESULT, e.g. '43% increase in organic traffic in 90 days' or 'Cut cost per lead from $180 to $60 in 6 weeks'].\n\nWorth 20 minutes to see if there's something similar on the table for {{company}}?\n\nBook here: {{calendly_url}}\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      },
+      {
+        "sequence_id": "nudge-email-4",
+        "step_number": 4,
+        "day_offset": 16,
+        "goal": "break_up",
+        "active": true,
+        "subject": [
+          "Closing this one out",
+          "{{first_name}} — last one from me"
+        ],
+        "body": "Hi {{first_name}},\n\nLast email from me.\n\nIf {{company}}'s digital marketing ever becomes a priority, I'm easy to find at nudgedigital.com.au.\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      }
+    ],
+
+    "linkedin_connect_note": "Hi {{first_name}}, noticed your work at {{company}} — some interesting stuff happening in {{industry}} right now. Would love to connect.",
+
+    "linkedin_messages": [
+      {
+        "sequence_id": "nudge-li-msg-1",
+        "step_number": 4,
+        "day_offset": 0,
+        "goal": "warm_up",
+        "trigger": "connection_accepted",
+        "body": "Hey {{first_name}}, thanks for connecting.\n\nI do freelance digital marketing strategy — SEO, paid media, analytics. Not a pitch, just context if it's ever relevant.\n\nHarrison"
+      }
+    ],
+
+    "nurture_emails": {
+      "not_now": {
+        "subject": "Quick one for {{first_name}}",
+        "body": "Hi {{first_name}},\n\nNo pitch — just saw something relevant to {{industry}} businesses and thought of {{company}}.\n\n[INSERT SPECIFIC INSIGHT, TOOL, OR FINDING]\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      },
+      "warm": {
+        "subject": "Thought this might be useful — {{company}}",
+        "body": "Hi {{first_name}},\n\n[INSERT SHORT VALUE EMAIL — tip, resource, or observation relevant to their industry/business]\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      },
+      "reactivation": {
+        "subject": "Checking back in",
+        "body": "Hi {{first_name}},\n\nIt's been a while — just checking in to see if {{company}}'s marketing priorities have shifted at all.\n\nIf you'd like a fresh set of eyes on anything, happy to chat: {{calendly_url}}\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      },
+      "breakup": {
+        "subject": "Last one from me",
+        "body": "Hi {{first_name}},\n\nI'll leave it here — clearly not the right time.\n\nIf that changes, nudgedigital.com.au is always there.\n\nHarrison\nNudge Digital — nudgedigital.com.au\n\nreply STOP to opt out"
+      }
+    },
+
+    "reply_templates": {
+      "positive_booking": "Hi {{first_name}},\n\nGreat — let's find a time: {{calendly_url}}\n\nHarrison",
+      "question_generic": "Hi {{first_name}},\n\nGood question — [ANSWER]\n\nHappy to go into more detail on a call: {{calendly_url}}\n\nHarrison"
+    }
+  }
+}

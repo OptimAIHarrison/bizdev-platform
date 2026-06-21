@@ -1,0 +1,118 @@
+{
+  "optimai": {
+    "brand": "optimai",
+    "brandName": "OptimAI",
+    "email": "harrison@optimai.com.au",
+    "website": "https://optimai.com.au",
+    "calendlyUrl": "https://calendly.com/optimai",
+    "icp": {
+      "companySizeMin": 5,
+      "companySizeMax": 200,
+      "industries": [
+        "professional services",
+        "saas",
+        "software",
+        "logistics",
+        "retail",
+        "construction",
+        "healthcare",
+        "legal",
+        "accounting",
+        "finance",
+        "consulting"
+      ],
+      "targetRoles": [
+        "founder",
+        "ceo",
+        "chief executive",
+        "coo",
+        "chief operating",
+        "head of operations",
+        "cto",
+        "chief technology",
+        "it manager",
+        "operations manager",
+        "managing director",
+        "director"
+      ],
+      "geographyPrimary": ["australia", "au"],
+      "geographySecondary": ["singapore", "new zealand", "hong kong", "apac"],
+      "intentSignals": [
+        "hiring operations",
+        "operations manager",
+        "process improvement",
+        "automation",
+        "recently funded",
+        "series a",
+        "seed round",
+        "growth stage",
+        "scaling",
+        "hiring to scale"
+      ],
+      "minIcpScore": 60
+    },
+    "voice": {
+      "tone": "peer-to-peer, confident, direct, no-fluff",
+      "avoid": ["synergy", "leverage", "game-changer", "unlock", "solution", "innovative", "seamless"],
+      "style": "Short sentences. Lead with insight, not product. Talk to founders as an equal.",
+      "exampleOpener": "Noticed [Company] is hiring 3 ops roles — that's usually a sign of a process bottleneck, not a people problem."
+    }
+  },
+  "nudge": {
+    "brand": "nudge",
+    "brandName": "Nudge Digital",
+    "email": "harrison@nudgedigital.com.au",
+    "website": "https://nudgedigital.com.au",
+    "calendlyUrl": "https://calendly.com/nudgedigital",
+    "icp": {
+      "companySizeMin": 2,
+      "companySizeMax": 50,
+      "industries": [
+        "ecommerce",
+        "retail",
+        "hospitality",
+        "restaurant",
+        "property",
+        "real estate",
+        "trades",
+        "health",
+        "wellness",
+        "fitness",
+        "saas",
+        "startup",
+        "local services"
+      ],
+      "targetRoles": [
+        "founder",
+        "owner",
+        "director",
+        "marketing manager",
+        "head of marketing",
+        "managing director",
+        "owner-operator",
+        "general manager"
+      ],
+      "geographyPrimary": ["melbourne", "victoria", "vic"],
+      "geographySecondary": ["sydney", "brisbane", "australia", "au"],
+      "intentSignals": [
+        "rebrand",
+        "new website",
+        "new product launch",
+        "hiring marketing",
+        "marketing manager",
+        "no marketing team",
+        "poor organic traffic",
+        "seo",
+        "google ads",
+        "paid media"
+      ],
+      "minIcpScore": 60
+    },
+    "voice": {
+      "tone": "expert practitioner, hyper-specific, honest, direct",
+      "avoid": ["agency", "team", "we", "us", "our team", "our agency"],
+      "style": "Show the work, don't claim it. Be specific and technical. Single person, not a team.",
+      "exampleOpener": "Looked at [Company]'s site — your GA4 setup is firing duplicate purchase events, which means your ROAS data is probably wrong."
+    }
+  }
+}

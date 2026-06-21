@@ -1,0 +1,16 @@
+# Railway deployment configuration
+# https://docs.railway.app/reference/config-as-code
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm ci && npx playwright install chromium --with-deps"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/api/overview"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "bizdev-platform"
