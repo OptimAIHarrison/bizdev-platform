@@ -23,9 +23,6 @@ const { runHealthCheck } = require('./modules/health-check');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Dashboard] BizDev Platform running on port ${PORT}`);
-});
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
@@ -435,7 +432,7 @@ app.get('/api/templates/render-email', (req, res) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Dashboard] BizDev Platform running on port ${PORT}`);
   console.log(`[Dashboard] http://localhost:${PORT}`);
 });
