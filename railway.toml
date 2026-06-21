@@ -7,7 +7,7 @@ buildCommand = "npx playwright install chromium --with-deps"
 
 [deploy]
 startCommand = "node server.js"
-healthcheckPath = "/api/overview"
+healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
