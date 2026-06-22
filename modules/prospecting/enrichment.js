@@ -248,7 +248,7 @@ async function enrichProspect(prospect) {
       web.metaDescription ? `Site: ${web.metaDescription.substring(0, 150)}` : '',
       web.jobSignals.join('; ')
     ].filter(Boolean).join(' | ');
-    enriched._websiteRawText = web.rawText; // For AI signal extraction
+    enriched._websiteRawText = web.rawText; // For rule-based signal detection (see signals.js)
   }
 
   // 2. Email discovery

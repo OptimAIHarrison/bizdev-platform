@@ -43,10 +43,10 @@ function matchesAny(source, keywords) {
  *
  * @param {Object} prospect - Enriched prospect data
  * @param {string} brand - 'optimai' | 'nudge'
- * @param {Object} [aiSignals] - Optional result from ai.extractIntentSignals()
+ * @param {Object} [detectedSignals] - Optional result from signals.detectSignals()
  * @returns {{ score: number, breakdown: Object, notes: string[] }}
  */
-function scoreProspect(prospect, brand, aiSignals = null) {
+function scoreProspect(prospect, brand, detectedSignals = null) {
   const icp = icpConfig[brand]?.icp;
   if (!icp) throw new Error(`Unknown brand: ${brand}`);
 
@@ -129,13 +129,14 @@ function scoreProspect(prospect, brand, aiSignals = null) {
     notes.push(`Intent signals: ${matchedSignals.join(', ')}`);
   }
 
-  // Add AI bonus score if available (0–5 from the 0–15 AI range, capped at 5 to avoid over-weighting)
-  const aiBonusScore = aiSignals?.bonusScore ? Math.min(5, Math.round(aiSignals.bonusScore / 3)) : 0;
-  if (aiSignals?.signals?.length > 0) {
-    notes.push(`AI signals: ${aiSignals.signals.slice(0, 3).join(', ')}`);
+  // Add bonus score from rule-based signal detection (0–5 from the 0–15 intent
+  // range, capped to avoid over-weighting one source)
+  const signalBonusScore = detectedSignals?.bonusScore ? Math.min(5, Math.round(detectedSignals.bonusScore / 3)) : 0;
+  if (detectedSignals?.signals?.length > 0) {
+    notes.push(`Signals: ${detectedSignals.signals.slice(0, 3).join(', ')}`);
   }
 
-  breakdown.intent = Math.min(15, ruleBasedIntentScore + aiBonusScore);
+  breakdown.intent = Math.min(15, ruleBasedIntentScore + signalBonusScore);
 
   // ── Engagement signals (0–10) ────────────────────────────────────────────
   // These are set externally if LinkedIn scraping found engagement

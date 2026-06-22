@@ -1,11 +1,17 @@
 /**
  * @module prospecting
  * @description Prospect discovery, enrichment, and qualification pipeline.
- * Sources: LinkedIn search scraper, Google Maps (local businesses), manual input.
+ * Sources: LinkedIn search scraper, LinkedIn signal monitoring (Gojiberry-style),
+ * Google Maps (local businesses), manual input.
  *
  * Pipeline per prospect:
  *   Raw Lead → Dedup Check → Website Scrape → Email Discovery
- *   → AI Intent Signal Extraction → ICP Scoring → CRM Insert
+ *   → Rule-Based Signal Detection → ICP Scoring → CRM Insert
+ *
+ * Signal-based prospecting (modules/prospecting/signals.js) monitors
+ * LinkedIn engagement, job changes, and hiring activity on target accounts —
+ * the same category of "buying signal" detection used by tools like
+ * Gojiberry, but implemented with plain scraping + rules rather than AI.
  *
  * Only prospects scoring 60+ are added to the outreach queue.
  */
@@ -15,8 +21,8 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
 const crm = require('../crm');
-const ai = require('../ai');
 const enrichment = require('./enrichment');
+const signals = require('./signals');
 const { scoreProspect, meetsThreshold } = require('./scoring');
 
 // ─── LinkedIn search scraper ──────────────────────────────────────────────────
@@ -188,6 +194,146 @@ async function scrapeGoogleMaps(query, maxResults = 20) {
   return results;
 }
 
+// ─── Signal monitoring (Gojiberry-style buying signal detection) ─────────────
+
+/**
+ * Scrapes the people who liked or commented on a specific LinkedIn post.
+ * Use this on your own posts, or on competitor/industry posts, to surface
+ * people already engaging with relevant content — a strong "in-market" signal.
+ *
+ * @param {string} postUrl - Full LinkedIn post URL
+ * @param {number} [maxResults=50]
+ * @returns {Promise<Array<{ firstName, lastName, title, company, linkedinUrl, engagementType }>>}
+ */
+async function scrapePostEngagement(postUrl, maxResults = 50) {
+  const liAt = process.env.LINKEDIN_SESSION_COOKIE;
+  if (!liAt) throw new Error('LINKEDIN_SESSION_COOKIE not set');
+
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const context = await browser.newContext({ locale: 'en-AU' });
+  await context.addCookies([{ name: 'li_at', value: liAt, domain: '.linkedin.com', path: '/', httpOnly: true, secure: true }]);
+
+  const page = await context.newPage();
+  const results = [];
+
+  try {
+    await page.goto(postUrl, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.waitForTimeout(2000 + Math.random() * 2000);
+
+    if (page.url().includes('/login') || page.url().includes('/checkpoint')) {
+      throw new Error('LinkedIn session invalid — cannot scrape post engagement');
+    }
+
+    // Open the "reactions" panel
+    const reactionsBtn = await page.$('button[aria-label*="reactions"], .social-details-social-counts__reactions-count');
+    if (reactionsBtn) {
+      await reactionsBtn.click();
+      await page.waitForTimeout(1500);
+    }
+
+    let scrolls = 0;
+    while (results.length < maxResults && scrolls < 10) {
+      const people = await page.$$eval('.social-details-reactors-tab-body-list-item, .artdeco-list__item', items =>
+        items.map(item => {
+          const nameEl = item.querySelector('.artdeco-entity-lockup__title, .feed-shared-actor__name');
+          const titleEl = item.querySelector('.artdeco-entity-lockup__subtitle, .feed-shared-actor__description');
+          const linkEl = item.querySelector('a[href*="/in/"]');
+          const fullName = nameEl?.textContent?.trim() || '';
+          const [firstName, ...rest] = fullName.split(' ');
+          return {
+            firstName: firstName || '',
+            lastName: rest.join(' ') || '',
+            title: titleEl?.textContent?.trim() || '',
+            linkedinUrl: linkEl?.href?.split('?')[0] || '',
+            engagementType: 'post_reaction'
+          };
+        }).filter(p => p.firstName && p.linkedinUrl)
+      );
+
+      for (const person of people) {
+        if (!results.find(r => r.linkedinUrl === person.linkedinUrl)) results.push(person);
+      }
+
+      await page.mouse.wheel(0, 600);
+      await page.waitForTimeout(1200 + Math.random() * 800);
+      scrolls++;
+    }
+  } finally {
+    await browser.close();
+  }
+
+  return results.slice(0, maxResults);
+}
+
+/**
+ * Scrapes comments on a LinkedIn post — comment authors are a stronger
+ * engagement signal than likes (more effort = more intent).
+ *
+ * @param {string} postUrl
+ * @param {number} [maxResults=30]
+ * @returns {Promise<Array<{ firstName, lastName, title, linkedinUrl, commentText, engagementType }>>}
+ */
+async function scrapePostComments(postUrl, maxResults = 30) {
+  const liAt = process.env.LINKEDIN_SESSION_COOKIE;
+  if (!liAt) throw new Error('LINKEDIN_SESSION_COOKIE not set');
+
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const context = await browser.newContext({ locale: 'en-AU' });
+  await context.addCookies([{ name: 'li_at', value: liAt, domain: '.linkedin.com', path: '/', httpOnly: true, secure: true }]);
+
+  const page = await context.newPage();
+  const results = [];
+
+  try {
+    await page.goto(postUrl, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.waitForTimeout(2000 + Math.random() * 2000);
+
+    if (page.url().includes('/login') || page.url().includes('/checkpoint')) {
+      throw new Error('LinkedIn session invalid — cannot scrape post comments');
+    }
+
+    const commentsBtn = await page.$('button[aria-label*="comment"]');
+    if (commentsBtn) {
+      await commentsBtn.click();
+      await page.waitForTimeout(1500);
+    }
+
+    let scrolls = 0;
+    while (results.length < maxResults && scrolls < 10) {
+      const comments = await page.$$eval('.comments-comment-item', items =>
+        items.map(item => {
+          const nameEl = item.querySelector('.comments-post-meta__name-text');
+          const titleEl = item.querySelector('.comments-post-meta__headline');
+          const linkEl = item.querySelector('a[href*="/in/"]');
+          const textEl = item.querySelector('.comments-comment-item__main-content');
+          const fullName = nameEl?.textContent?.trim() || '';
+          const [firstName, ...rest] = fullName.split(' ');
+          return {
+            firstName: firstName || '',
+            lastName: rest.join(' ') || '',
+            title: titleEl?.textContent?.trim() || '',
+            linkedinUrl: linkEl?.href?.split('?')[0] || '',
+            commentText: textEl?.textContent?.trim().substring(0, 300) || '',
+            engagementType: 'post_comment'
+          };
+        }).filter(p => p.firstName && p.linkedinUrl)
+      );
+
+      for (const comment of comments) {
+        if (!results.find(r => r.linkedinUrl === comment.linkedinUrl)) results.push(comment);
+      }
+
+      await page.mouse.wheel(0, 600);
+      await page.waitForTimeout(1200 + Math.random() * 800);
+      scrolls++;
+    }
+  } finally {
+    await browser.close();
+  }
+
+  return results.slice(0, maxResults);
+}
+
 // ─── Full pipeline ─────────────────────────────────────────────────────────────
 
 /**
@@ -218,7 +364,11 @@ async function runProspectingPipeline(rawLeads, brand, source = 'unknown') {
         email: lead.email || '',
         website: lead.website || '',
         source,
-        status: 'new'
+        status: 'new',
+        // Signal metadata — populated when the lead came from signal monitoring
+        // rather than a plain search scrape (see scrapePostEngagement/scrapePostComments)
+        engagement_signals: lead.engagementType ? '5' : '',
+        notes: lead.commentText ? `Commented: "${lead.commentText}"` : ''
       };
 
       if (!prospect.first_name && !prospect.company) {
@@ -238,19 +388,13 @@ async function runProspectingPipeline(rawLeads, brand, source = 'unknown') {
       console.log(`[Prospecting] Enriching: ${prospect.first_name} ${prospect.last_name} @ ${prospect.company}`);
       const enriched = await enrichment.enrichProspect(prospect);
 
-      // 4. AI intent signal extraction (optional — uses API credits)
-      let aiSignals = null;
-      if (enriched._websiteRawText) {
-        aiSignals = await ai.extractIntentSignals({
-          websiteContent: enriched._websiteRawText,
-          linkedinContent: '',
-          brand
-        }).catch(() => null);
-      }
+      // 4. Rule-based intent signal detection (job changes, hiring, content engagement —
+      //    no AI call; see modules/prospecting/signals.js for the detection logic)
+      const detectedSignals = signals.detectSignals(enriched);
       delete enriched._websiteRawText; // Don't persist raw scraped content
 
       // 5. ICP scoring
-      const { score, breakdown, notes } = scoreProspect(enriched, brand, aiSignals);
+      const { score, breakdown, notes } = scoreProspect(enriched, brand, detectedSignals);
       enriched.icp_score = score.toString();
       enriched.notes = [enriched.notes, notes.join('; ')].filter(Boolean).join(' | ');
 
@@ -285,5 +429,7 @@ module.exports = {
   scrapeLinkedInSearch,
   scrapeLinkedInProfile,
   scrapeGoogleMaps,
+  scrapePostEngagement,
+  scrapePostComments,
   runProspectingPipeline
 };

@@ -39,8 +39,7 @@ function checkEnv() {
     'GOOGLE_OAUTH_CLIENT_ID',
     'GOOGLE_OAUTH_CLIENT_SECRET',
     'GOOGLE_OAUTH_REFRESH_TOKEN',
-    'GOOGLE_SHEETS_ID',
-    'ANTHROPIC_API_KEY'
+    'GOOGLE_SHEETS_ID'
   ];
   const optional = [
     'LINKEDIN_SESSION_COOKIE',
@@ -143,7 +142,7 @@ function printSummary() {
     ['Add GitHub Secrets', 'Settings → Secrets → add all values from .env.example'],
     ['Test the dashboard', 'node server.js → open http://localhost:3000'],
     ['Run first prospect scrape', 'GitHub Actions → Prospect Discovery → Run workflow'],
-    ['Review first drafts', 'Dashboard → Drafts → review and approve AI-generated messages'],
+    ['Review first drafts', 'Dashboard → Drafts → review and approve templated messages'],
   ];
   steps.forEach(([title, detail], i) => {
     console.log(c.bold(`\n  ${i+1}. ${title}`));

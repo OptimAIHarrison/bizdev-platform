@@ -13,13 +13,13 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const crm = require('./modules/crm');
-const ai = require('./modules/ai');
 const emailModule = require('./modules/outreach/email');
 const { runOutreachQueue } = require('./modules/outreach');
-const { runProspectingPipeline } = require('./modules/prospecting');
+const { runProspectingPipeline, scrapeLinkedInSearch, scrapePostEngagement, scrapePostComments } = require('./modules/prospecting');
 const { runReplyMonitor } = require('./modules/replies');
 const { runNurtureEngine } = require('./modules/nurture');
 const { runHealthCheck } = require('./modules/health-check');
+const templating = require('./modules/templating');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -281,10 +281,38 @@ app.post('/api/actions/scrape-linkedin', async (req, res) => {
     const { searchUrl, brand } = req.body;
     if (!searchUrl || !brand) return res.status(400).json({ error: 'searchUrl and brand required' });
 
-    runProspectingPipeline([], brand, 'linkedin_search')
-      .catch(err => console.error('[Dashboard] Prospect scrape error:', err));
+    (async () => {
+      try {
+        const leads = await scrapeLinkedInSearch(searchUrl);
+        await runProspectingPipeline(leads, brand, 'linkedin_search');
+      } catch (err) {
+        console.error('[Dashboard] Prospect scrape error:', err.message);
+      }
+    })();
 
-    res.json({ success: true, message: 'LinkedIn scrape started' });
+    res.json({ success: true, message: 'LinkedIn search scrape started' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/actions/scrape-signals', async (req, res) => {
+  try {
+    const { postUrl, brand, signalType } = req.body;
+    if (!postUrl || !brand) return res.status(400).json({ error: 'postUrl and brand required' });
+
+    (async () => {
+      try {
+        const leads = signalType === 'comments'
+          ? await scrapePostComments(postUrl)
+          : await scrapePostEngagement(postUrl);
+        await runProspectingPipeline(leads, brand, 'linkedin_signal');
+      } catch (err) {
+        console.error('[Dashboard] Signal scrape error:', err.message);
+      }
+    })();
+
+    res.json({ success: true, message: `Signal scrape started (${signalType === 'comments' ? 'comments' : 'reactions'})` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -367,7 +395,7 @@ app.get('/api/reporting', async (req, res) => {
   }
 });
 
-// ─── AI preview ───────────────────────────────────────────────────────────────
+// ─── Message preview (template-based, no AI call) ─────────────────────────────
 
 app.post('/api/preview-message', async (req, res) => {
   try {
@@ -379,20 +407,20 @@ app.post('/api/preview-message', async (req, res) => {
     const step = sequences[brand]?.find(s => s.sequence_id === stepId);
     if (!step) return res.status(404).json({ error: 'Step not found' });
 
-    const previousMessages = await crm.getMessagesForProspect(prospectId);
+    const settings = await crm.getSettings();
 
     let preview;
     if (step.channel === 'email') {
-      preview = await ai.generateOutreachEmail({ prospect, step, brand, previousMessages });
+      preview = templating.renderEmailStep({ prospect, brand, stepNumber: step.step_number, settings });
     } else if (step.channel === 'linkedin_connect') {
-      preview = await ai.generateLinkedInConnect({ prospect, brand });
+      preview = { message: templating.renderLinkedInConnect({ prospect, brand, settings }) };
     } else if (step.channel === 'linkedin_message') {
-      preview = await ai.generateLinkedInMessage({ prospect, brand, step, previousMessages });
+      preview = templating.renderLinkedInMessage({ prospect, brand, stepNumber: step.step_number, settings });
     } else {
       preview = { message: `[${step.channel} — no content needed]` };
     }
 
-    res.json(preview);
+    res.json(preview || { error: 'No template found for this step' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -400,8 +428,6 @@ app.post('/api/preview-message', async (req, res) => {
 
 
 // ─── API: Templates ───────────────────────────────────────────────────────────
-
-const templating = require('./modules/templating');
 
 app.get('/api/templates', (req, res) => {
   try { res.json(templating.getAllTemplates()); }
@@ -432,6 +458,15 @@ app.get('/api/templates/render-email', (req, res) => {
     const mockProspect = { first_name: 'Alex', last_name: 'Chen', company: 'Acme Co', title: 'CEO', industry: 'SaaS', location: 'Melbourne', website: 'acme.com' };
     const rendered = templating.renderEmailStep({ prospect: mockProspect, brand, stepNumber: parseInt(stepNumber), abVariant: abVariant || 'A', settings: {} });
     res.json(rendered || { subject: '', body: '' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── API: Sequences (read-only, for the dashboard Sequences view) ────────────
+
+app.get('/api/sequences', (req, res) => {
+  try {
+    const sequences = require('./config/sequences.json');
+    res.json(sequences);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

@@ -2,7 +2,8 @@
  * @module replies
  * @description Reply detection and inbox management.
  * Monitors Gmail and LinkedIn for replies from known prospects,
- * classifies intent via Claude, and triggers appropriate next actions.
+ * classifies intent using rule-based keyword matching (no AI/LLM call),
+ * and triggers appropriate next actions.
  *
  * Run every 30 minutes on weekdays via GitHub Actions.
  */
@@ -11,7 +12,7 @@
 
 require('dotenv').config();
 const crm = require('../crm');
-const ai = require('../ai');
+const { classifyReply } = require('./classifier');
 const emailModule = require('../outreach/email');
 const linkedinModule = require('../outreach/linkedin');
 
@@ -68,9 +69,9 @@ async function processGmailReplies() {
     // Get prior messages for context
     const thread = await crm.getMessagesForProspect(prospect.id);
 
-    // Classify intent via Claude
+    // Classify intent — rule-based, no AI call
     console.log(`[Replies] Classifying reply from ${reply.from}...`);
-    const classification = await ai.classifyReply({
+    const classification = classifyReply({
       replyContent: reply.body,
       prospect,
       thread
@@ -144,7 +145,7 @@ async function processLinkedInReplies() {
 
     const thread = await crm.getMessagesForProspect(prospect.id);
 
-    const classification = await ai.classifyReply({
+    const classification = classifyReply({
       replyContent: msg.message,
       prospect,
       thread
@@ -181,17 +182,22 @@ async function processLinkedInReplies() {
  * Takes the appropriate system action based on the classified reply intent.
  *
  * @param {Object} prospect
- * @param {Object} classification - From ai.classifyReply()
+ * @param {Object} classification - From classifier.classifyReply()
  * @param {Object} replyData - Raw reply object
  * @param {string} channel - 'email' | 'linkedin'
  */
 async function handleIntent(prospect, classification, replyData, channel) {
   const settings = await crm.getSettings();
+  const templating = require('../templating');
 
   switch (classification.intent) {
     case 'positive_interest':
       // Update status, alert founder
       await crm.updateProspect(prospect.id, { status: 'responded' });
+
+      const suggestedBookingReply = templating.renderReplyTemplate({
+        prospect, brand: prospect.brand, templateKey: 'positive_booking', settings
+      });
 
       const alertBody = [
         `🔥 ${prospect.first_name} ${prospect.last_name} from ${prospect.company} replied with interest.`,
@@ -201,7 +207,7 @@ async function handleIntent(prospect, classification, replyData, channel) {
         ``,
         `Intent classification: ${classification.summary}`,
         ``,
-        classification.suggestedReply ? `Suggested reply:\n---\n${classification.suggestedReply}\n---` : '',
+        suggestedBookingReply ? `Suggested reply template:\n---\n${suggestedBookingReply}\n---` : '',
         ``,
         `View in dashboard: http://localhost:${process.env.PORT || 3000}/replies`
       ].filter(s => s !== null).join('\n');
@@ -211,12 +217,10 @@ async function handleIntent(prospect, classification, replyData, channel) {
         body: alertBody
       });
 
-      // Auto-respond with Calendly link if configured
-      if (settings.AUTO_RESPOND_POSITIVE === 'true' && channel === 'email') {
-        const calendlyUrl = settings.CALENDLY_URL || process.env.CALENDLY_URL;
-        const autoReply = `Hi ${prospect.first_name},\n\nThanks for getting back to me — great to hear.\n\nEasiest thing is to grab a time here: ${calendlyUrl}\n\nLooking forward to it.\n\nHarrison`;
+      // Auto-respond with Calendly link if configured — uses the editable template
+      if (settings.AUTO_RESPOND_POSITIVE === 'true' && channel === 'email' && suggestedBookingReply) {
         const fromEmail = prospect.brand === 'optimai' ? process.env.OPTIMAI_EMAIL : process.env.NUDGE_EMAIL;
-        await emailModule.sendEmail({ from: fromEmail, to: prospect.email, subject: `Re: ${replyData.subject}`, body: autoReply });
+        await emailModule.sendEmail({ from: fromEmail, to: prospect.email, subject: `Re: ${replyData.subject}`, body: suggestedBookingReply });
       }
       break;
 
@@ -256,8 +260,11 @@ async function handleIntent(prospect, classification, replyData, channel) {
       break;
 
     case 'question_objection':
-      // Alert founder with suggested reply
+      // Alert founder with a starting-point reply template
       await crm.updateProspect(prospect.id, { status: 'responded' });
+      const suggestedQuestionReply = templating.renderReplyTemplate({
+        prospect, brand: prospect.brand, templateKey: 'question_generic', settings
+      });
       await emailModule.sendFounderAlert({
         subject: `💬 ${prospect.first_name} from ${prospect.company} has a question`,
         body: [
@@ -265,9 +272,9 @@ async function handleIntent(prospect, classification, replyData, channel) {
           ``,
           `Their message: ${replyData.body || replyData.message}`,
           ``,
-          `Suggested reply (review and send manually):`,
+          `Reply template (edit before sending — fill in the [ANSWER] placeholder):`,
           `---`,
-          classification.suggestedReply || 'No suggestion generated.',
+          suggestedQuestionReply || 'No reply template configured for this brand — add one in the Templates tab.',
           `---`,
           ``,
           `View in dashboard: http://localhost:${process.env.PORT || 3000}/replies`
