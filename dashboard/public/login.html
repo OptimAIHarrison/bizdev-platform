@@ -3,51 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Outreach Machine — Sign in</title>
+  <title>Infinity Machine — Sign in</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0b10;
-      --glass: rgba(24, 27, 38, 0.55);
-      --glass-light: rgba(255, 255, 255, 0.04);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-soft: rgba(255, 255, 255, 0.05);
-      --indigo: #6366f1;
-      --indigo-bright: #818cf8;
-      --violet: #a78bfa;
-      --cyan: #22d3ee;
-      --green: #34d399;
-      --red: #f87171;
-      --text: #f5f5f7;
-      --muted: #797c8a;
-      --faint: #4b4e5c;
-      --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --mono: 'JetBrains Mono', 'SF Mono', monospace;
-      --gradient-signal: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 50%, var(--cyan) 100%);
+      --bg:       #f1f3f8;
+      --surface:  #ffffff;
+      --border:   rgba(0, 0, 0, 0.08);
+      --indigo:   #6366f1;
+      --violet:   #7c3aed;
+      --cyan:     #0891b2;
+      --green:    #059669;
+      --red:      #dc2626;
+      --text:     #0f172a;
+      --muted:    #64748b;
+      --faint:    #94a3b8;
+      --sans:     'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono:     'JetBrains Mono', 'SF Mono', monospace;
+      --gradient-signal: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #0891b2 100%);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { color-scheme: dark; }
+    html { color-scheme: light; }
 
     body {
       background:
-        radial-gradient(ellipse 1100px 600px at 20% -10%, rgba(99,102,241,0.16), transparent 60%),
-        radial-gradient(ellipse 900px 600px at 100% 100%, rgba(34,211,238,0.08), transparent 55%),
+        radial-gradient(ellipse 1000px 600px at 20% -10%, rgba(99,102,241,0.09), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 100% 110%, rgba(8,145,178,0.06), transparent 55%),
         var(--bg);
-      background-attachment: fixed;
-      color: var(--text);
-      font-family: var(--sans);
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      font-family: var(--sans);
       -webkit-font-smoothing: antialiased;
+      color: var(--text);
     }
 
     .card {
-      background: var(--glass);
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--border);
@@ -55,65 +51,65 @@
       padding: 40px 36px;
       width: 360px;
       position: relative;
-      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
-      animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .card::before {
-      content: '';
-      position: absolute; inset: 0;
-      border-radius: inherit;
-      padding: 1px;
-      background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 45%);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.9) inset,
+        0 20px 50px -12px rgba(99,102,241,0.12),
+        0 4px 16px rgba(0,0,0,0.06);
+      animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
     .logo-mark { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+
     .logo-glyph {
       width: 38px; height: 38px;
       border-radius: 11px;
       background: var(--gradient-signal);
       display: flex; align-items: center; justify-content: center;
       position: relative;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 4px 18px rgba(99,102,241,0.45);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.3) inset, 0 4px 14px rgba(99,102,241,0.35);
       flex-shrink: 0;
     }
     .logo-glyph::after {
       content: '';
       position: absolute; inset: 0;
       border-radius: 11px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.35), transparent 60%);
+      background: linear-gradient(135deg, rgba(255,255,255,0.4), transparent 60%);
     }
     .logo-glyph svg { width: 20px; height: 20px; position: relative; z-index: 1; }
 
-    .logo-text h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .logo-text h1 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
     .pulse-dot {
       display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--green); box-shadow: 0 0 8px var(--green);
+      background: var(--green); box-shadow: 0 0 0 2px rgba(5,150,105,0.2);
       margin-right: 7px; animation: pulse-soft 2.4s ease-in-out infinite;
     }
-    @keyframes pulse-soft { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes pulse-soft { 0%,100% { opacity: 1; box-shadow: 0 0 0 2px rgba(5,150,105,0.2); } 50% { opacity: 0.5; box-shadow: 0 0 0 4px rgba(5,150,105,0.1); } }
 
     .brand-row { display: flex; gap: 6px; margin-top: 6px; }
     .brand-chip {
       font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
       padding: 3px 8px; border-radius: 100px;
-      background: var(--glass-light); border: 1px solid var(--border-soft);
-      color: var(--muted);
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.15);
+      color: var(--indigo);
     }
 
     label {
-      display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
-      color: var(--muted); margin-bottom: 8px; font-weight: 600;
+      display: block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); margin-bottom: 8px;
     }
 
     input {
       width: 100%;
-      background: rgba(255,255,255,0.03);
+      background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 12px;
@@ -122,8 +118,9 @@
       font-family: var(--sans);
       outline: none;
       transition: all 0.18s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
     input::placeholder { color: var(--faint); }
 
     button {
@@ -138,10 +135,10 @@
       font-weight: 700;
       font-family: var(--sans);
       cursor: pointer;
-      box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 4px 16px -4px rgba(99,102,241,0.6);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 4px 14px rgba(99,102,241,0.4);
       transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    button:hover { box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 6px 24px -4px rgba(99,102,241,0.75); transform: translateY(-1px); }
+    button:hover { box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 6px 20px rgba(99,102,241,0.5); transform: translateY(-1px); }
     button:active { transform: translateY(0); }
 
     .error {
@@ -149,8 +146,8 @@
       font-size: 12.5px;
       margin-top: 14px;
       display: none;
-      background: rgba(248,113,113,0.1);
-      border: 1px solid rgba(248,113,113,0.25);
+      background: rgba(220,38,38,0.07);
+      border: 1px solid rgba(220,38,38,0.2);
       border-radius: 8px;
       padding: 10px 12px;
     }
@@ -173,7 +170,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h4l2-7 4 14 2-7h4"/></svg>
       </div>
       <div class="logo-text">
-        <h1><span class="pulse-dot"></span>Outreach Machine</h1>
+        <h1><span class="pulse-dot"></span>Infinity Machine</h1>
         <div class="brand-row">
           <span class="brand-chip">OptimAI</span>
           <span class="brand-chip">Nudge Digital</span>
@@ -183,10 +180,10 @@
 
     <label>Access Code</label>
     <input type="password" id="secret" placeholder="Enter your access code" autofocus onkeydown="if(event.key==='Enter') login()">
-    <button onclick="login()">Enter the Machine</button>
+    <button onclick="login()">Enter</button>
     <div class="error" id="err">Incorrect access code — try again.</div>
 
-    <div class="footer-note">For internal use only</div>
+    <div class="footer-note">Internal use only</div>
   </div>
 
   <script>
