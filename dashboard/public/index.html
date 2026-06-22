@@ -867,23 +867,63 @@ async function api(path, method = 'GET', body = null) {
 async function loadOverview() {
   try {
     const data = await api('/overview');
-    document.getElementById('stat-active').textContent = data.funnel.contacted;
-    document.getElementById('stat-replied').textContent = data.funnel.replied;
-    document.getElementById('stat-meetings').textContent = data.funnel.meetings;
-    document.getElementById('stat-sent').textContent = data.todayMessages;
-    document.getElementById('f-total').textContent = data.funnel.total;
-    document.getElementById('f-contacted').textContent = data.funnel.contacted;
-    document.getElementById('f-replied').textContent = data.funnel.replied;
-    document.getElementById('f-meetings').textContent = data.funnel.meetings;
-    document.getElementById('f-won').textContent = data.funnel.won;
+
+    // Show a setup banner if Google Sheets isn't connected yet
+    const existing = document.getElementById('crm-setup-banner');
+    if (!data.crmConnected) {
+      if (!existing) {
+        document.getElementById('view-overview').insertAdjacentHTML('afterbegin', `
+          <div id="crm-setup-banner" style="
+            background: rgba(99,102,241,0.08);
+            border: 1px solid rgba(99,102,241,0.25);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+          ">
+            <span style="font-size:18px;line-height:1">ℹ️</span>
+            <div>
+              <strong style="color:var(--text)">Google Sheets not connected</strong><br>
+              The dashboard is running but can't read or write data yet. Fill in
+              <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px">GOOGLE_OAUTH_CLIENT_ID</code>,
+              <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px">GOOGLE_OAUTH_CLIENT_SECRET</code>,
+              <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px">GOOGLE_OAUTH_REFRESH_TOKEN</code> and
+              <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px">GOOGLE_SHEETS_ID</code>
+              in your <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px">.env</code> file,
+              then run <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px">node setup.js</code> to initialise the sheet.
+              Templates, Sequences, and Find Leads still work without Sheets.
+            </div>
+          </div>
+        `);
+      }
+    } else {
+      existing?.remove();
+    }
+
+    document.getElementById('stat-active').textContent    = data.funnel.contacted;
+    document.getElementById('stat-replied').textContent   = data.funnel.replied;
+    document.getElementById('stat-meetings').textContent  = data.funnel.meetings;
+    document.getElementById('stat-sent').textContent      = data.todayMessages;
+    document.getElementById('f-total').textContent        = data.funnel.total;
+    document.getElementById('f-contacted').textContent    = data.funnel.contacted;
+    document.getElementById('f-replied').textContent      = data.funnel.replied;
+    document.getElementById('f-meetings').textContent     = data.funnel.meetings;
+    document.getElementById('f-won').textContent          = data.funnel.won;
     document.getElementById('brand-optimai-count').textContent = data.byBrand.optimai;
-    document.getElementById('brand-nudge-count').textContent = data.byBrand.nudge;
-    document.getElementById('unhandled-count').textContent = data.unhandledReplies;
+    document.getElementById('brand-nudge-count').textContent   = data.byBrand.nudge;
+    document.getElementById('unhandled-count').textContent     = data.unhandledReplies;
+
     if (data.unhandledReplies > 0) {
       document.getElementById('nav-replies').querySelector('.nav-badge')?.remove();
       document.getElementById('nav-replies').insertAdjacentHTML('beforeend', `<span class="nav-badge">${data.unhandledReplies}</span>`);
     }
-  } catch (err) { console.error('Overview load failed:', err); }
+  } catch (err) {
+    console.error('Overview load failed:', err);
+  }
 }
 
 // ── Prospects ─────────────────────────────────────────────────────────────────
