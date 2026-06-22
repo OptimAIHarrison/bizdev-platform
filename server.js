@@ -58,12 +58,10 @@ app.use((req, res, next) => {
 
 // ─── HTML routes ──────────────────────────────────────────────────────────────
 
-// Serve the SPA for all non-API routes
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'dashboard/public/login.html')));
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-  res.sendFile(path.join(__dirname, 'dashboard/public/index.html'));
-});
+
+// NOTE: the SPA catch-all is registered at the BOTTOM of this file, after all
+// API routes, so Express can match /api/* before falling through to index.html.
 
 // ─── API: Dashboard overview ──────────────────────────────────────────────────
 
@@ -470,11 +468,20 @@ app.get('/api/sequences', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── SPA catch-all (MUST be last — after all API routes) ─────────────────────
+// Any non-API GET that hasn't been matched above gets index.html (the SPA).
+// If it somehow matches here as an /api/ path it means the route doesn't exist.
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(path.join(__dirname, 'dashboard/public/index.html'));
+});
+
 // ─── Start ────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Dashboard] BizDev Platform running on port ${PORT}`);
-  console.log(`[Dashboard] http://localhost:${PORT}`);
+  console.log(`[Infinity Machine] Running on port ${PORT}`);
+  console.log(`[Infinity Machine] http://localhost:${PORT}`);
 });
 
 module.exports = app;
