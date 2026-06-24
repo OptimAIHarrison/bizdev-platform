@@ -1150,41 +1150,266 @@ async function loadReporting() {
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 async function loadSettings() {
-  try {
-    const settings = await api('/settings');
-    const keys = [
-      ['MANUAL_APPROVAL_MODE', 'Manual approval mode (true/false)'],
-      ['AUTO_SEND_EMAIL', 'Auto-send emails (true/false)'],
-      ['AUTO_RESPOND_POSITIVE', 'Auto-respond to positive replies (true/false)'],
-      ['CALENDLY_URL', 'Calendly booking URL'],
-      ['OPTIMAI_DAILY_LIMIT', 'OptimAI daily email limit'],
-      ['NUDGE_DAILY_LIMIT', 'Nudge daily email limit'],
-      ['CASE_STUDIES', 'Recent case studies / wins (for nurture emails)'],
-    ];
-    document.getElementById('settings-container').innerHTML = `
-      <div class="glass card">
-        <h3>System Settings</h3>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          ${keys.map(([k, label]) => `
-            <div class="health-row" style="align-items:flex-start;flex-direction:column;gap:7px">
-              <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">${label}</label>
-              <div style="display:flex;gap:8px;width:100%">
-                <input type="text" value="${settings[k] || ''}" id="setting-${k}" style="flex:1">
-                <button class="btn btn-glass btn-sm" onclick="saveSetting('${k}')">Save</button>
-              </div>
-            </div>
-          `).join('')}
+  const container = document.getElementById('settings-container');
+  container.innerHTML = '<div class="loading">Loading system status…</div>';
+
+  // Load both in parallel — settings from Sheets, status from env vars
+  const [settings, status] = await Promise.all([
+    api('/settings').catch(() => ({})),
+    api('/status').catch(() => ({})),
+  ]);
+
+  const tick  = (ok) => ok
+    ? `<span style="color:var(--green);font-weight:700">✓ Connected</span>`
+    : `<span style="color:var(--red);font-weight:700">✗ Not set</span>`;
+
+  const pill = (ok, yes, no) => ok
+    ? `<span class="badge badge-active">${yes}</span>`
+    : `<span class="badge badge-new">${no}</span>`;
+
+  const railwayVars = (vars) => vars.map(v =>
+    `<code style="display:inline-block;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.18);border-radius:5px;padding:2px 7px;font-family:var(--mono);font-size:11px;margin:2px">${v}</code>`
+  ).join(' ');
+
+  container.innerHTML = `
+
+    <!-- ── Test / Live Mode ───────────────────────────────────────────── -->
+    <div class="glass card" style="border:2px solid ${status.testMode ? 'rgba(251,191,36,0.4)' : 'rgba(5,150,105,0.3)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <h3 style="margin:0">${status.testMode ? '🧪 Test Mode — emails are NOT being sent' : '🟢 Live Mode — emails are being sent for real'}</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm ${status.testMode ? 'btn-glass' : 'btn-success'}" onclick="setMode(false)">Go Live</button>
+          <button class="btn btn-sm ${status.testMode ? 'btn-glass' : 'btn-glass'}" style="${status.testMode?'border-color:rgba(217,119,6,0.5);color:var(--yellow)':''}" onclick="setMode(true)">Test Mode</button>
         </div>
       </div>
-    `;
-  } catch (err) { document.getElementById('settings-container').innerHTML = `<div class="loading" style="color:var(--red)">Error: ${err.message}</div>`; }
+      <p style="color:var(--muted);font-size:12.5px;margin-top:8px">
+        ${status.testMode
+          ? `Test mode is <strong>ON</strong>. All outreach emails are intercepted — ${status.testEmail ? `redirected to <strong>${status.testEmail}</strong>` : 'logged to console only (set TEST_EMAIL in Railway to redirect to your inbox)'}. LinkedIn actions still run unless you also pause them.`
+          : `Live mode is <strong>ON</strong>. Emails send for real from your Workspace accounts. Make sure your templates are ready and Manual Approval Mode is on before running the outreach queue.`
+        }
+      </p>
+      ${status.testMode ? `
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <input type="text" id="test-email-input" value="${status.testEmail || ''}" placeholder="Redirect test emails to (e.g. you@example.com)" style="max-width:320px">
+          <button class="btn btn-glass btn-sm" onclick="saveRailwayHint('TEST_EMAIL')">Note: set in Railway</button>
+        </div>
+      ` : ''}
+    </div>
+
+    <!-- ── System Status ─────────────────────────────────────────────── -->
+    <div class="glass card">
+      <h3>System Status</h3>
+      <p class="card-sub">All credentials are set in Railway environment variables — never in code.</p>
+
+      <!-- Google Sheets -->
+      <div style="border-bottom:1px solid var(--border-soft);padding-bottom:16px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:700;font-size:13px">📊 Google Sheets (CRM)</div>
+          ${tick(status.sheets?.connected)}
+        </div>
+        ${!status.sheets?.connected ? `
+          <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text-dim);margin-bottom:10px">
+            ${status.sheets?.error ? `Error: <code style="font-size:11px">${status.sheets.error}</code><br><br>` : ''}
+            Set these in Railway Variables:<br><br>
+            ${railwayVars(['GOOGLE_OAUTH_CLIENT_ID','GOOGLE_OAUTH_CLIENT_SECRET','GOOGLE_OAUTH_REFRESH_TOKEN','GOOGLE_SHEETS_ID'])}
+            <br><br>Then run <code style="font-size:11px">node setup.js</code> locally to create the sheet tabs.
+          </div>
+        ` : `<div style="font-size:12px;color:var(--muted)">Sheet ID and refresh token confirmed. CRM is live.</div>`}
+      </div>
+
+      <!-- OptimAI Email -->
+      <div style="border-bottom:1px solid var(--border-soft);padding-bottom:16px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-weight:700;font-size:13px">📧 OptimAI Gmail</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${status.brands?.optimai || 'OPTIMAI_EMAIL not set'}</div>
+          </div>
+          ${tick(status.email?.optimai?.configured)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+          <div style="padding:8px;background:var(--surface-2);border-radius:8px">
+            Client ID<br><span style="color:${status.email?.optimai?.hasClientId?'var(--green)':'var(--red)'};font-weight:700">${status.email?.optimai?.hasClientId?'✓ Set':'✗ Missing'}</span><br>
+            <span style="color:var(--faint);font-size:10.5px">OPTIMAI_OAUTH_CLIENT_ID</span>
+          </div>
+          <div style="padding:8px;background:var(--surface-2);border-radius:8px">
+            Client Secret<br><span style="color:${status.email?.optimai?.hasSecret?'var(--green)':'var(--red)'};font-weight:700">${status.email?.optimai?.hasSecret?'✓ Set':'✗ Missing'}</span><br>
+            <span style="color:var(--faint);font-size:10.5px">OPTIMAI_OAUTH_CLIENT_SECRET</span>
+          </div>
+          <div style="padding:8px;background:var(--surface-2);border-radius:8px">
+            Refresh Token<br><span style="color:${status.email?.optimai?.hasToken?'var(--green)':'var(--red)'};font-weight:700">${status.email?.optimai?.hasToken?'✓ Set':'✗ Missing'}</span><br>
+            <span style="color:var(--faint);font-size:10.5px">OPTIMAI_OAUTH_REFRESH_TOKEN</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nudge Email -->
+      <div style="border-bottom:1px solid var(--border-soft);padding-bottom:16px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-weight:700;font-size:13px">📧 Nudge Digital Gmail</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${status.brands?.nudge || 'NUDGE_EMAIL not set'}</div>
+          </div>
+          ${tick(status.email?.nudge?.configured)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+          <div style="padding:8px;background:var(--surface-2);border-radius:8px">
+            Client ID<br><span style="color:${status.email?.nudge?.hasClientId?'var(--green)':'var(--red)'};font-weight:700">${status.email?.nudge?.hasClientId?'✓ Set':'✗ Missing'}</span><br>
+            <span style="color:var(--faint);font-size:10.5px">NUDGE_OAUTH_CLIENT_ID</span>
+          </div>
+          <div style="padding:8px;background:var(--surface-2);border-radius:8px">
+            Client Secret<br><span style="color:${status.email?.nudge?.hasSecret?'var(--green)':'var(--red)'};font-weight:700">${status.email?.nudge?.hasSecret?'✓ Set':'✗ Missing'}</span><br>
+            <span style="color:var(--faint);font-size:10.5px">NUDGE_OAUTH_CLIENT_SECRET</span>
+          </div>
+          <div style="padding:8px;background:var(--surface-2);border-radius:8px">
+            Refresh Token<br><span style="color:${status.email?.nudge?.hasToken?'var(--green)':'var(--red)'};font-weight:700">${status.email?.nudge?.hasToken?'✓ Set':'✗ Missing'}</span><br>
+            <span style="color:var(--faint);font-size:10.5px">NUDGE_OAUTH_REFRESH_TOKEN</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LinkedIn -->
+      <div style="border-bottom:1px solid var(--border-soft);padding-bottom:16px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700;font-size:13px">🔗 LinkedIn Session</div>
+          ${tick(status.linkedin?.cookieSet)}
+        </div>
+        ${status.linkedin?.cookieSet
+          ? `<div style="font-size:12px;color:var(--muted);margin-top:6px">Cookie set (${status.linkedin.cookieLength} chars). Refresh every 2–3 weeks via browser DevTools → Application → Cookies → li_at.</div>`
+          : `<div style="font-size:12px;color:var(--muted);margin-top:6px">Set <code style="font-size:11px">LINKEDIN_SESSION_COOKIE</code> in Railway. Get it from Chrome DevTools → Application → Cookies → linkedin.com → <code>li_at</code>.</div>`
+        }
+      </div>
+
+      <!-- Other services -->
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px">Other Services</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          <div style="padding:10px;background:var(--surface-2);border-radius:8px;display:flex;justify-content:space-between">
+            <span>Resend (email fallback)</span>${pill(status.services?.resend,'✓ Set','Not set')}
+          </div>
+          <div style="padding:10px;background:var(--surface-2);border-radius:8px;display:flex;justify-content:space-between">
+            <span>Hunter.io (email lookup)</span>${pill(status.services?.hunter,'✓ Set','Not set')}
+          </div>
+          <div style="padding:10px;background:var(--surface-2);border-radius:8px;display:flex;justify-content:space-between">
+            <span>Apollo.io (email lookup)</span>${pill(status.services?.apollo,'✓ Set','Not set')}
+          </div>
+          <div style="padding:10px;background:var(--surface-2);border-radius:8px;display:flex;justify-content:space-between">
+            <span>Calendly URL</span>${pill(status.services?.calendly,'✓ Set','Not set')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Feature Flags ──────────────────────────────────────────────── -->
+    <div class="glass card">
+      <h3>Feature Flags</h3>
+      <p class="card-sub">Set these in Railway Variables. Changes take effect on next restart.</p>
+      <div style="display:flex;flex-direction:column;gap:0">
+        ${[
+          ['MANUAL_APPROVAL_MODE', 'Manual Approval Mode', status.flags?.manualApprovalMode, 'true', 'All messages go to Drafts for review before sending'],
+          ['AUTO_SEND_EMAIL', 'Auto-Send Email', status.flags?.autoSendEmail, 'false', 'Emails send automatically without draft review'],
+          ['AUTO_SEND_LINKEDIN', 'Auto-Send LinkedIn', status.flags?.autoSendLinkedIn, 'false', 'LinkedIn messages send without draft review'],
+          ['AUTO_RESPOND_POSITIVE', 'Auto-Respond Positive', status.flags?.autoRespondPositive, 'false', 'Positive replies get the Calendly template auto-sent'],
+        ].map(([key, label, current, recommended, desc]) => `
+          <div class="health-row" style="align-items:flex-start;flex-direction:column;gap:4px;padding:14px 0">
+            <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+              <div>
+                <strong style="font-size:13px">${label}</strong>
+                <span style="font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-left:8px">${key}</span>
+              </div>
+              <span class="badge badge-${current ? 'active' : 'new'}" style="flex-shrink:0">${current ? 'true' : 'false'}</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted)">${desc} · Recommended: <code style="font-size:11px">${recommended}</code></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- ── Runtime Config (from Sheets) ─────────────────────────────── -->
+    <div class="glass card">
+      <h3>Runtime Config</h3>
+      <p class="card-sub">Stored in the Settings tab of your Google Sheet. Editable without a redeploy.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
+        ${[
+          ['CALENDLY_URL', 'Calendly booking URL'],
+          ['OPTIMAI_DAILY_LIMIT', 'OptimAI daily email limit'],
+          ['NUDGE_DAILY_LIMIT', 'Nudge daily email limit'],
+          ['CASE_STUDIES', 'Recent case studies / wins (used in nurture emails)'],
+        ].map(([k, label]) => `
+          <div>
+            <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:600">${label}</label>
+            <div style="display:flex;gap:8px;margin-top:7px">
+              <input type="text" value="${escHtml(settings[k] || '')}" id="setting-${k}" style="flex:1">
+              <button class="btn btn-glass btn-sm" onclick="saveSetting('${k}')">Save</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- ── Railway Variables Reference ──────────────────────────────── -->
+    <div class="glass card">
+      <h3>Railway Variables — Full Reference</h3>
+      <p class="card-sub">Everything you need to set in Railway → your project → Variables. Red items above are missing.</p>
+      <div style="font-size:12px;line-height:2;font-family:var(--mono);background:var(--surface-2);border-radius:10px;padding:16px;overflow-x:auto">
+        <span style="color:var(--muted)"># Dashboard</span><br>
+        DASHBOARD_SECRET=your-access-code<br>
+        PORT=8080<br><br>
+        <span style="color:var(--muted)"># OptimAI — Google Workspace (optimai.com.au)</span><br>
+        OPTIMAI_EMAIL=harrison@optimai.com.au<br>
+        OPTIMAI_OAUTH_CLIENT_ID=<br>
+        OPTIMAI_OAUTH_CLIENT_SECRET=<br>
+        OPTIMAI_OAUTH_REFRESH_TOKEN=<br><br>
+        <span style="color:var(--muted)"># Nudge Digital — Google Workspace (nudgedigital.com.au)</span><br>
+        NUDGE_EMAIL=harrison@nudgedigital.com.au<br>
+        NUDGE_OAUTH_CLIENT_ID=<br>
+        NUDGE_OAUTH_CLIENT_SECRET=<br>
+        NUDGE_OAUTH_REFRESH_TOKEN=<br><br>
+        <span style="color:var(--muted)"># CRM (shared — either Workspace account)</span><br>
+        GOOGLE_SHEETS_ID=<br>
+        GOOGLE_OAUTH_CLIENT_ID=<br>
+        GOOGLE_OAUTH_CLIENT_SECRET=<br>
+        GOOGLE_OAUTH_REFRESH_TOKEN=<br><br>
+        <span style="color:var(--muted)"># LinkedIn</span><br>
+        LINKEDIN_SESSION_COOKIE=<br><br>
+        <span style="color:var(--muted)"># Alerts &amp; booking</span><br>
+        FOUNDER_EMAIL=harrison@optimai.com.au<br>
+        CALENDLY_URL=https://calendly.com/your-link<br><br>
+        <span style="color:var(--muted)"># Optional enrichment</span><br>
+        RESEND_API_KEY=<br>
+        HUNTER_API_KEY=<br>
+        APOLLO_API_KEY=<br><br>
+        <span style="color:var(--muted)"># Mode (test = emails intercepted, not sent)</span><br>
+        TEST_MODE=true<br>
+        TEST_EMAIL=harrison@optimai.com.au<br><br>
+        <span style="color:var(--muted)"># Feature flags</span><br>
+        MANUAL_APPROVAL_MODE=true<br>
+        AUTO_SEND_EMAIL=false<br>
+        AUTO_SEND_LINKEDIN=false<br>
+        AUTO_RESPOND_POSITIVE=false<br>
+      </div>
+    </div>
+  `;
 }
 
 async function saveSetting(key) {
   const value = document.getElementById(`setting-${key}`)?.value;
-  try { await api('/settings', 'POST', { key, value }); toast('Setting saved'); }
+  try { await api('/settings', 'POST', { key, value }); toast(`${key} saved`); }
   catch (err) { toast(`Error: ${err.message}`, 'error'); }
 }
+
+async function setMode(testMode) {
+  toast(`Switching to ${testMode ? 'test' : 'live'} mode — update TEST_MODE in Railway Variables`, testMode ? 'success' : 'success');
+  // Can't write env vars at runtime — show user what to do
+  setTimeout(() => {
+    alert(`To switch to ${testMode ? 'TEST' : 'LIVE'} mode:\n\n1. Go to Railway → your project → Variables\n2. Set TEST_MODE = ${testMode ? 'true' : 'false'}\n3. Railway will redeploy automatically (takes ~30 seconds)\n\nThe Settings page will update once the redeploy is done.`);
+  }, 300);
+}
+
+function saveRailwayHint(varName) {
+  alert(`TEST_EMAIL can't be set from here — it's an environment variable.\n\nGo to Railway → Variables → add:\nTEST_EMAIL = ${document.getElementById('test-email-input')?.value || 'your@email.com'}\n\nRailway will redeploy automatically.`);
+}
+
+
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
 async function triggerAction(action) {
