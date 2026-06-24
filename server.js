@@ -427,7 +427,74 @@ app.get('/api/templates/render-email', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── Sequences ────────────────────────────────────────────────────────────────
+// ─── System Status ────────────────────────────────────────────────────────────
+// Powers the Settings → System Status panel. Returns live credential checks,
+// feature flags, and test mode state — all without making external API calls.
+
+app.get('/api/status', async (req, res) => {
+  const emailMod = safeRequire('./modules/outreach/email');
+  const emailStatus = emailMod?.getEmailStatus() || {};
+
+  // Check Google Sheets connectivity with a lightweight call
+  let sheetsConnected = false;
+  let sheetsError     = null;
+  try {
+    if (process.env.GOOGLE_SHEETS_ID && process.env.GOOGLE_OAUTH_REFRESH_TOKEN) {
+      await crmCall(c => c.readSheet('Settings'), null);
+      sheetsConnected = true;
+    }
+  } catch (e) {
+    sheetsError = e.message;
+  }
+
+  res.json({
+    // Overall
+    testMode:    process.env.TEST_MODE === 'true',
+    testEmail:   process.env.TEST_EMAIL || null,
+
+    // Google / Sheets
+    sheets: {
+      connected:    sheetsConnected,
+      error:        sheetsError,
+      sheetId:      process.env.GOOGLE_SHEETS_ID ? '✓ set' : null,
+      refreshToken: process.env.GOOGLE_OAUTH_REFRESH_TOKEN ? '✓ set' : null,
+    },
+
+    // Email — per brand
+    email: emailStatus,
+
+    // LinkedIn
+    linkedin: {
+      cookieSet:    !!process.env.LINKEDIN_SESSION_COOKIE,
+      cookieLength: process.env.LINKEDIN_SESSION_COOKIE?.length || 0,
+    },
+
+    // Feature flags
+    flags: {
+      manualApprovalMode: process.env.MANUAL_APPROVAL_MODE !== 'false',
+      autoSendEmail:      process.env.AUTO_SEND_EMAIL === 'true',
+      autoSendLinkedIn:   process.env.AUTO_SEND_LINKEDIN === 'true',
+      autoRespondPositive:process.env.AUTO_RESPOND_POSITIVE === 'true',
+    },
+
+    // Optional services
+    services: {
+      resend:   !!process.env.RESEND_API_KEY,
+      hunter:   !!process.env.HUNTER_API_KEY,
+      apollo:   !!process.env.APOLLO_API_KEY,
+      calendly: process.env.CALENDLY_URL || null,
+    },
+
+    // Brand email addresses
+    brands: {
+      optimai: process.env.OPTIMAI_EMAIL || null,
+      nudge:   process.env.NUDGE_EMAIL   || null,
+      founder: process.env.FOUNDER_EMAIL || null,
+    }
+  });
+});
+
+
 
 app.get('/api/sequences', (req, res) => {
   try {
