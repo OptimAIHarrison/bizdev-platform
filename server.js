@@ -90,39 +90,47 @@ function checkEnv() {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'dashboard/public')));
 
-// Auth middleware
+// ─── Auth middleware (runs BEFORE static serving of index.html) ───────────────
+// login.html and its assets are served publicly.
+// Everything else — including the main dashboard — requires the access code.
+
 app.use((req, res, next) => {
+  // Always allow health check
   if (req.path === '/health') return next();
-  if (req.path.startsWith('/public')) return next();
+
+  // Always allow login page and its direct assets
+  if (req.path === '/login.html' || req.path === '/login') return next();
 
   const secret = process.env.DASHBOARD_SECRET;
 
-  // If no DASHBOARD_SECRET is set, allow everything (dev mode)
+  // No DASHBOARD_SECRET set → open access (dev mode, shows warning in console)
   if (!secret) return next();
 
+  // Check header (used by login.html fetch to test credentials)
   const authHeader = req.headers['x-dashboard-secret'];
   if (authHeader === secret) return next();
 
+  // Check cookie (set after successful login)
   const cookieMatch = req.headers.cookie?.split(';')
     .map(c => c.trim())
     .find(c => c.startsWith('ds='));
   const cookieVal = cookieMatch ? decodeURIComponent(cookieMatch.split('=')[1]) : null;
   if (cookieVal === secret) return next();
 
+  // Not authenticated
   if (req.path.startsWith('/api/')) {
     return res.status(401).json({ error: 'Unauthorised — check your access code' });
   }
 
-  if (!req.path.startsWith('/login')) return res.redirect('/login.html');
-  next();
+  // Redirect all other unauthenticated requests to login
+  return res.redirect('/login.html');
 });
 
-// HTML routes
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'dashboard/public/login.html')));
+// Static files served AFTER auth check
+// login.html is served here for direct /login.html requests that passed auth above
+app.use(express.static(path.join(__dirname, 'dashboard/public')));
 
-// NOTE: SPA catch-all is at the BOTTOM — after all /api/* routes.
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 
@@ -496,9 +504,80 @@ app.get('/api/status', async (req, res) => {
 
 
 
+// ─── Sequences (full CRUD) ────────────────────────────────────────────────────
+
+const fs        = require('fs');
+const SEQS_PATH = path.join(__dirname, 'config/sequences.json');
+
+function readSequences() {
+  return JSON.parse(fs.readFileSync(SEQS_PATH, 'utf-8'));
+}
+function writeSequences(data) {
+  fs.writeFileSync(SEQS_PATH, JSON.stringify(data, null, 2), 'utf-8');
+}
+
 app.get('/api/sequences', (req, res) => {
+  try { res.json(readSequences()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Add a step
+app.post('/api/sequences/:brand', (req, res) => {
   try {
-    res.json(require('./config/sequences.json'));
+    const { brand } = req.params;
+    const seqs = readSequences();
+    if (!seqs[brand]) seqs[brand] = [];
+    const maxStep = seqs[brand].reduce((m, s) => Math.max(m, s.step_number || 0), 0);
+    const newStep = {
+      sequence_id: `${brand}-${req.body.channel}-${maxStep + 1}-${Date.now()}`,
+      step_number:  maxStep + 1,
+      day_offset:   req.body.day_offset ?? 0,
+      channel:      req.body.channel    ?? 'email',
+      goal:         req.body.goal       ?? 'warm_up',
+      active:       req.body.active     ?? true,
+      notes:        req.body.notes      ?? '',
+    };
+    seqs[brand].push(newStep);
+    writeSequences(seqs);
+    res.json({ success: true, step: newStep });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Update a step
+app.patch('/api/sequences/:brand/:stepNumber', (req, res) => {
+  try {
+    const { brand, stepNumber } = req.params;
+    const seqs = readSequences();
+    const idx  = seqs[brand]?.findIndex(s => String(s.step_number) === String(stepNumber));
+    if (idx == null || idx === -1) return res.status(404).json({ error: 'Step not found' });
+    seqs[brand][idx] = { ...seqs[brand][idx], ...req.body };
+    writeSequences(seqs);
+    res.json({ success: true, step: seqs[brand][idx] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Delete a step
+app.delete('/api/sequences/:brand/:stepNumber', (req, res) => {
+  try {
+    const { brand, stepNumber } = req.params;
+    const seqs = readSequences();
+    if (!seqs[brand]) return res.status(404).json({ error: 'Brand not found' });
+    seqs[brand] = seqs[brand].filter(s => String(s.step_number) !== String(stepNumber));
+    seqs[brand].forEach((s, i) => { s.step_number = i + 1; });
+    writeSequences(seqs);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Reorder — accepts full ordered array
+app.put('/api/sequences/:brand', (req, res) => {
+  try {
+    const { brand } = req.params;
+    const seqs = readSequences();
+    if (!Array.isArray(req.body)) return res.status(400).json({ error: 'Expected array' });
+    seqs[brand] = req.body.map((s, i) => ({ ...s, step_number: i + 1 }));
+    writeSequences(seqs);
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
