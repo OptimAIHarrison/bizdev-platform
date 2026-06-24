@@ -544,6 +544,23 @@
       .mobile-menu-btn svg { width: 18px; height: 18px; color: var(--text); }
       .view { padding: 76px 18px 50px; }
       .form-grid { grid-template-columns: 1fr; }
+      .search-bar { flex-wrap: wrap; }
+      .search-bar input { max-width: 100%; flex: 1 1 100%; }
+      .search-bar select { flex: 1 1 auto; }
+      #view-overview > div[style*="grid-template-columns:1fr 1fr"],
+      #view-findleads > div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+      #view-settings div[style*="grid-template-columns:1fr 1fr 1fr"] {
+        grid-template-columns: 1fr 1fr !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #view-settings div[style*="grid-template-columns:1fr 1fr 1fr"],
+      #view-settings div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
     }
   </style>
 </head>
