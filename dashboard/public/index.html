@@ -764,8 +764,68 @@
 
     <!-- ── Sequences ───────────────────────────────────────────────────── -->
     <section class="view" id="view-sequences">
-      <div class="view-head"><div><h2>Sequences</h2><p class="view-subtitle">Multi-channel outreach sequences for each brand</p></div></div>
-      <div id="sequences-container"><div class="loading">Loading sequence config…</div></div>
+      <div class="view-head">
+        <div><h2>Sequence Builder</h2><p class="view-subtitle">Edit step timing, channels and goals. Message copy lives in the Templates tab.</p></div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <select id="seq-brand" onchange="loadSequences()" style="width:auto">
+            <option value="optimai">OptimAI</option>
+            <option value="nudge">Nudge Digital</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="showAddStep()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add Step
+          </button>
+        </div>
+      </div>
+
+      <!-- Visual timeline + table -->
+      <div id="sequences-container"><div class="loading">Loading…</div></div>
+
+      <!-- Add/Edit step modal (inline) -->
+      <div id="step-form" style="display:none" class="glass card" style="margin-top:20px">
+        <h3 id="step-form-title">Add Step</h3>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Channel</label>
+            <select id="sf-channel">
+              <option value="email">Email</option>
+              <option value="linkedin_view">LinkedIn — View Profile</option>
+              <option value="linkedin_like">LinkedIn — Like Post</option>
+              <option value="linkedin_connect">LinkedIn — Connect Request</option>
+              <option value="linkedin_message">LinkedIn — Message</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Day Offset <span style="font-weight:400;color:var(--muted)">(days after prospect added)</span></label>
+            <input type="number" id="sf-day" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Goal</label>
+            <select id="sf-goal">
+              <option value="warm_up">Warm Up</option>
+              <option value="establish_credibility">Establish Credibility</option>
+              <option value="ask_for_meeting">Ask for Meeting</option>
+              <option value="break_up">Break Up</option>
+              <option value="nurture">Nurture</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Active</label>
+            <select id="sf-active">
+              <option value="true">Yes — runs automatically</option>
+              <option value="false">No — skipped</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Notes <span style="font-weight:400;color:var(--muted)">(internal only)</span></label>
+            <input type="text" id="sf-notes" placeholder="e.g. Main credibility email — A/B test subjects">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary btn-sm" id="sf-save-btn" onclick="saveStep()">Save Step</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelStepForm()">Cancel</button>
+        </div>
+      </div>
     </section>
 
     <!-- ── Templates ───────────────────────────────────────────────────── -->
@@ -1094,34 +1154,183 @@ async function rejectDraft(id) {
 }
 
 // ── Sequences ─────────────────────────────────────────────────────────────────
+
+let _seqEditingStep = null; // null = adding, number = editing step_number
+
+const CHANNEL_LABELS = {
+  email:             '✉️ Email',
+  linkedin_view:     '👁 LinkedIn View',
+  linkedin_like:     '👍 LinkedIn Like',
+  linkedin_connect:  '🤝 LinkedIn Connect',
+  linkedin_message:  '💬 LinkedIn Message',
+};
+const CHANNEL_BADGE = {
+  email:            'queued',
+  linkedin_view:    'new',
+  linkedin_like:    'new',
+  linkedin_connect: 'active',
+  linkedin_message: 'active',
+};
+
 async function loadSequences() {
+  const brand = document.getElementById('seq-brand')?.value || 'optimai';
+  const container = document.getElementById('sequences-container');
+  container.innerHTML = '<div class="loading">Loading…</div>';
+
   const seqs = await api('/sequences').catch(() => null);
-  if (!seqs) { document.getElementById('sequences-container').innerHTML = '<div class="loading" style="color:var(--red)">Could not load sequences.</div>'; return; }
-  const brands = Object.keys(seqs);
-  document.getElementById('sequences-container').innerHTML = brands.map(brand => `
-    <div class="glass card">
-      <h3 class="brand-${brand}">${brand === 'optimai' ? 'OptimAI' : 'Nudge Digital'} Sequence</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Step</th><th>Channel</th><th>Day</th><th>Goal</th><th>Notes</th></tr></thead>
-          <tbody>
-            ${seqs[brand].map(s => `
-              <tr>
-                <td class="mono">${s.step_number}</td>
-                <td><span class="badge badge-${s.channel.startsWith('linkedin') ? 'active' : 'queued'}">${s.channel}</span></td>
-                <td class="mono">+${s.day_offset}d</td>
-                <td>${s.goal?.replace(/_/g,' ') || '—'}</td>
-                <td style="color:var(--muted);font-size:12px">${s.notes || '—'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+  if (!seqs) { container.innerHTML = '<div class="loading" style="color:var(--red)">Could not load sequences.</div>'; return; }
+
+  const steps = seqs[brand] || [];
+
+  if (!steps.length) {
+    container.innerHTML = `
+      <div class="glass card" style="text-align:center;color:var(--muted);padding:40px">
+        No steps yet for this brand.<br>
+        <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="showAddStep()">Add first step</button>
+      </div>`;
+    return;
+  }
+
+  // Visual timeline + editable table
+  container.innerHTML = `
+    <!-- Visual flow -->
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:28px;overflow-x:auto;padding:4px 0">
+      ${steps.map((s, i) => `
+        <div style="display:flex;align-items:center;flex-shrink:0">
+          <div style="
+            padding:12px 16px;text-align:center;
+            background:${s.active === false || s.active === 'false' ? 'var(--surface-2)' : 'rgba(99,102,241,0.08)'};
+            border:1px solid ${s.active === false || s.active === 'false' ? 'var(--border-soft)' : 'rgba(99,102,241,0.2)'};
+            border-radius:12px;cursor:pointer;transition:all 0.18s;min-width:110px
+          " onclick="editStep(${s.step_number})" title="Click to edit">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:4px">Day +${s.day_offset}</div>
+            <div style="font-size:12px;font-weight:700">${CHANNEL_LABELS[s.channel] || s.channel}</div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:3px">${(s.goal || '').replace(/_/g,' ')}</div>
+            ${s.active === false || s.active === 'false' ? '<div style="font-size:10px;color:var(--faint);margin-top:4px">paused</div>' : ''}
+          </div>
+          ${i < steps.length - 1 ? `
+            <div style="width:28px;height:2px;background:linear-gradient(90deg,rgba(99,102,241,0.4),rgba(99,102,241,0.1));flex-shrink:0"></div>
+          ` : ''}
+        </div>
+      `).join('')}
     </div>
-  `).join('');
+
+    <!-- Editable table -->
+    <div class="glass" style="overflow:hidden;margin-bottom:0">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Channel</th>
+            <th>Day</th>
+            <th>Goal</th>
+            <th>Active</th>
+            <th>Notes</th>
+            <th style="width:100px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${steps.map(s => `
+            <tr>
+              <td class="mono" style="color:var(--faint)">${s.step_number}</td>
+              <td><span class="badge badge-${CHANNEL_BADGE[s.channel] || 'new'}">${CHANNEL_LABELS[s.channel] || s.channel}</span></td>
+              <td class="mono">+${s.day_offset}d</td>
+              <td style="font-size:12.5px">${(s.goal || '').replace(/_/g,' ')}</td>
+              <td>
+                <span class="badge badge-${s.active === false || s.active === 'false' ? 'paused' : 'active'}">
+                  ${s.active === false || s.active === 'false' ? 'paused' : 'active'}
+                </span>
+              </td>
+              <td style="color:var(--muted);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.notes || '—'}</td>
+              <td>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-ghost btn-sm" onclick="editStep(${s.step_number})" style="padding:4px 10px">Edit</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteStep(${s.step_number})" style="padding:4px 10px">✕</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+      💡 Message copy for email and LinkedIn steps is edited in the <strong>Templates</strong> tab. Sequences control <em>timing and channel only</em>.
+    </div>
+  `;
+}
+
+function showAddStep() {
+  _seqEditingStep = null;
+  document.getElementById('step-form-title').textContent = 'Add Step';
+  document.getElementById('sf-save-btn').textContent = 'Add Step';
+  document.getElementById('sf-channel').value = 'email';
+  document.getElementById('sf-day').value = '0';
+  document.getElementById('sf-goal').value = 'warm_up';
+  document.getElementById('sf-active').value = 'true';
+  document.getElementById('sf-notes').value = '';
+  document.getElementById('step-form').style.display = 'block';
+  document.getElementById('step-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function editStep(stepNumber) {
+  const brand = document.getElementById('seq-brand').value;
+  const seqs  = await api('/sequences').catch(() => null);
+  const step  = seqs?.[brand]?.find(s => s.step_number === stepNumber);
+  if (!step) return;
+
+  _seqEditingStep = stepNumber;
+  document.getElementById('step-form-title').textContent = `Edit Step ${stepNumber}`;
+  document.getElementById('sf-save-btn').textContent = 'Save Changes';
+  document.getElementById('sf-channel').value = step.channel || 'email';
+  document.getElementById('sf-day').value     = step.day_offset ?? 0;
+  document.getElementById('sf-goal').value    = step.goal || 'warm_up';
+  document.getElementById('sf-active').value  = String(step.active !== false && step.active !== 'false');
+  document.getElementById('sf-notes').value   = step.notes || '';
+  document.getElementById('step-form').style.display = 'block';
+  document.getElementById('step-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function saveStep() {
+  const brand = document.getElementById('seq-brand').value;
+  const body  = {
+    channel:    document.getElementById('sf-channel').value,
+    day_offset: parseInt(document.getElementById('sf-day').value) || 0,
+    goal:       document.getElementById('sf-goal').value,
+    active:     document.getElementById('sf-active').value === 'true',
+    notes:      document.getElementById('sf-notes').value,
+  };
+
+  try {
+    if (_seqEditingStep == null) {
+      await api(`/sequences/${brand}`, 'POST', body);
+      toast('Step added');
+    } else {
+      await api(`/sequences/${brand}/${_seqEditingStep}`, 'PATCH', body);
+      toast('Step updated');
+    }
+    cancelStepForm();
+    loadSequences();
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+async function deleteStep(stepNumber) {
+  if (!confirm(`Delete step ${stepNumber}? This can't be undone.`)) return;
+  const brand = document.getElementById('seq-brand').value;
+  try {
+    await api(`/sequences/${brand}/${stepNumber}`, 'DELETE');
+    toast('Step deleted');
+    loadSequences();
+  } catch (err) { toast(`Error: ${err.message}`, 'error'); }
+}
+
+function cancelStepForm() {
+  _seqEditingStep = null;
+  document.getElementById('step-form').style.display = 'none';
 }
 
 // ── Reporting ─────────────────────────────────────────────────────────────────
+
 async function loadReporting() {
   try {
     const data = await api('/reporting');
