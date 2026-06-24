@@ -23,7 +23,7 @@
       --surface-3:   #eceef4;
       --glass:       rgba(255, 255, 255, 0.72);
       --glass-light: rgba(99, 102, 241, 0.06);
-      --border:      rgba(0, 0, 0, 0.08);
+      --border:      rgba(0, 0, 0, 0.16);
       --border-soft: rgba(0, 0, 0, 0.06);
       --border-glow: rgba(99, 102, 241, 0.3);
 
@@ -504,19 +504,58 @@
     a { color: var(--indigo-bright); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
+    .mobile-menu-btn { display: none; }
+
     @media (max-width: 860px) {
       .app { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 100;
+        width: 252px;
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 0 40px rgba(0,0,0,0.25);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 90;
+      }
+      .sidebar-overlay.show { display: block; }
+      .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px; height: 38px;
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 110;
+        cursor: pointer;
+      }
+      .mobile-menu-btn svg { width: 18px; height: 18px; color: var(--text); }
+      .view { padding: 76px 18px 50px; }
       .form-grid { grid-template-columns: 1fr; }
-      .view { padding: 24px 18px 50px; }
     }
   </style>
 </head>
 <body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="app">
 
   <!-- ═══════════════════════════ Sidebar ═══════════════════════════ -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="logo-block">
       <div class="logo-mark">
         <div class="logo-glyph">
@@ -903,8 +942,27 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (view === 'settings') loadSettings();
     if (view === 'sequences') loadSequences();
     if (view === 'templates') loadTemplateEditor();
+    closeMobileSidebar();
   });
 });
+
+// ── Mobile sidebar ────────────────────────────────────────────────────────────
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const sidebarEl = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openMobileSidebar() {
+  sidebarEl.classList.add('open');
+  sidebarOverlay.classList.add('show');
+}
+function closeMobileSidebar() {
+  sidebarEl.classList.remove('open');
+  sidebarOverlay.classList.remove('show');
+}
+mobileMenuBtn?.addEventListener('click', () => {
+  sidebarEl.classList.contains('open') ? closeMobileSidebar() : openMobileSidebar();
+});
+sidebarOverlay?.addEventListener('click', closeMobileSidebar);
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function toast(msg, type = 'success') {
